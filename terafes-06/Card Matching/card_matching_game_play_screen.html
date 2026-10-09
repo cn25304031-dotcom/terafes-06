@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -192,7 +192,7 @@
             <div class="flex flex-col gap-1 items-center justify-center border-l border-slate-700/60">
                 <button id="hint-btn" onclick="useHint()" class="w-full py-1 px-1 bg-purple-600/80 hover:bg-purple-500 text-white font-bold font-orbitron text-[10px] md:text-xs rounded-lg shadow transition active:scale-95 border border-purple-400/40 flex items-center justify-center gap-1">
                     <i class="fa-solid fa-eye"></i>
-                    <span>HINT (1)</span>
+                    <span id="hint-text">HINT (1)</span>
                 </button>
                 <button onclick="resetGame()" class="w-full py-1 px-1 bg-red-600/80 hover:bg-red-500 text-white font-bold font-orbitron text-[10px] md:text-xs rounded-lg shadow transition active:scale-95 border border-red-400/40 flex items-center justify-center gap-1">
                     <i class="fa-solid fa-rotate-right"></i>
@@ -368,10 +368,11 @@
             { icon: 'fa-crosshairs', color: 'text-red-400' }
         ];
 
+        // 難易度ごとにヒント回数 (hints) を設定
         const DIFFICULTY_SETTINGS = {
-            easy: { grid: 2, pairs: 2, time: 30, fontScale: 'text-4xl md:text-6xl', hasBomb: false, next: 'normal' },
-            normal: { grid: 4, pairs: 8, time: 60, fontScale: 'text-2xl md:text-4xl', hasBomb: false, next: 'hard' },
-            hard: { grid: 6, pairs: 17, time: 120, fontScale: 'text-lg md:text-2xl', hasBomb: true, next: null }
+            easy: { grid: 2, pairs: 2, time: 30, hints: 1, fontScale: 'text-4xl md:text-6xl', hasBomb: false, next: 'normal' },
+            normal: { grid: 4, pairs: 8, time: 60, hints: 3, fontScale: 'text-2xl md:text-4xl', hasBomb: false, next: 'hard' },
+            hard: { grid: 6, pairs: 17, time: 120, hints: 5, fontScale: 'text-lg md:text-2xl', hasBomb: true, next: null }
         };
 
         let currentDifficulty = 'easy';
@@ -382,7 +383,7 @@
         let moves = 0;
         let combo = 0;
         let maxCombo = 0;
-        let hintUsed = false;
+        let remainingHints = 1;
         let timer = 0;
         let timerInterval = null;
         let isBoardLocked = false;
@@ -434,22 +435,32 @@
             combo = 0;
             maxCombo = 0;
             matchedPairs = 0;
-            hintUsed = false;
+            remainingHints = setting.hints; // 難易度別のヒント回数を初期化
             timer = setting.time;
             flippedCards = [];
             isBoardLocked = false;
             isGameStarted = false;
 
-            const hintBtn = document.getElementById('hint-btn');
-            hintBtn.disabled = false;
-            hintBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-
+            updateHintButton();
             updateHUD();
             document.getElementById('clear-modal').classList.add('hidden');
             document.getElementById('gameover-modal').classList.add('hidden');
 
             generateBoard(setting);
             renderHighScores();
+        }
+
+        function updateHintButton() {
+            const hintBtn = document.getElementById('hint-btn');
+            document.getElementById('hint-text').textContent = `HINT (${remainingHints})`;
+
+            if (remainingHints <= 0) {
+                hintBtn.disabled = true;
+                hintBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                hintBtn.disabled = false;
+                hintBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
         }
 
         function updateHUD() {
@@ -503,11 +514,9 @@
         }
 
         function useHint() {
-            if (hintUsed || isBoardLocked) return;
-            hintUsed = true;
-            const hintBtn = document.getElementById('hint-btn');
-            hintBtn.disabled = true;
-            hintBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            if (remainingHints <= 0 || isBoardLocked) return;
+            remainingHints--;
+            updateHintButton();
 
             cards.forEach(card => {
                 if (!card.classList.contains('matched') && !card.classList.contains('flipped')) {
