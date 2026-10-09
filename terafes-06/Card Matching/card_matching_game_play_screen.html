@@ -214,6 +214,7 @@
         SPACE SHOOTER × CARD MATCHING SYSTEM &copy; 2026
     </footer>
 
+    <!-- CLEAR MODAL -->
     <div id="clear-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md hidden p-4">
         <div class="neon-panel rounded-3xl p-6 md:p-8 max-w-md w-full text-center space-y-5 border-2 border-cyan-400 shadow-[0_0_50px_rgba(56,189,248,0.4)] transform scale-95 transition-all">
             <div class="text-5xl text-amber-400 animate-bounce">
@@ -243,17 +244,26 @@
                 </div>
             </div>
 
-            <div class="flex gap-3">
-                <button onclick="resetGame()" class="flex-1 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold font-orbitron rounded-xl shadow-lg transition active:scale-95 text-xs md:text-sm">
-                    もう一度あそぶ
+            <div class="flex flex-col gap-2.5">
+                <!-- NEXT LEVEL BUTTON -->
+                <button id="next-level-btn" onclick="nextLevel()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black font-orbitron rounded-xl shadow-lg transition active:scale-95 text-xs md:text-sm uppercase tracking-wider flex items-center justify-center gap-2">
+                    <span>次のレベルへ</span>
+                    <i class="fa-solid fa-arrow-right"></i>
                 </button>
-                <a href="index.jsp" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold font-orbitron rounded-xl border border-slate-600 transition flex items-center justify-center text-xs md:text-sm">
-                    タイトルへ
-                </a>
+
+                <div class="flex gap-2.5">
+                    <button onclick="resetGame()" class="flex-1 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold font-orbitron rounded-xl shadow-lg transition active:scale-95 text-xs">
+                        もう一度あそぶ
+                    </button>
+                    <a href="index.jsp" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold font-orbitron rounded-xl border border-slate-600 transition flex items-center justify-center text-xs">
+                        タイトルへ
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- GAME OVER MODAL -->
     <div id="gameover-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md hidden p-4">
         <div class="neon-panel rounded-3xl p-6 md:p-8 max-w-md w-full text-center space-y-5 border-2 border-red-500 shadow-[0_0_50px_rgba(239,68,68,0.4)]">
             <div class="text-5xl text-red-500 animate-pulse">
@@ -314,9 +324,9 @@
 
         // Config per Difficulty
         const DIFFICULTY_SETTINGS = {
-            easy: { grid: 2, pairs: 2, time: 30, fontScale: 'text-4xl md:text-6xl' },
-            normal: { grid: 4, pairs: 8, time: 60, fontScale: 'text-2xl md:text-4xl' },
-            hard: { grid: 6, pairs: 18, time: 120, fontScale: 'text-lg md:text-2xl' }
+            easy: { grid: 2, pairs: 2, time: 30, fontScale: 'text-4xl md:text-6xl', next: 'normal' },
+            normal: { grid: 4, pairs: 8, time: 60, fontScale: 'text-2xl md:text-4xl', next: 'hard' },
+            hard: { grid: 6, pairs: 18, time: 120, fontScale: 'text-lg md:text-2xl', next: null }
         };
 
         // Game State Variables
@@ -364,6 +374,15 @@
             }
 
             resetGame();
+        }
+
+        function nextLevel() {
+            const nextDiff = DIFFICULTY_SETTINGS[currentDifficulty].next;
+            if (nextDiff) {
+                setDifficulty(nextDiff);
+            } else {
+                setDifficulty('easy'); // 全難易度クリア時はEASYに戻る
+            }
         }
 
         function resetGame() {
@@ -517,6 +536,18 @@
             document.getElementById('modal-time-bonus').textContent = `+${timeBonus}`;
             document.getElementById('modal-moves').textContent = moves;
             document.getElementById('modal-final-score').textContent = finalScore;
+
+            // 「次のレベルへ」ボタンのラベル切り替え
+            const nextBtn = document.getElementById('next-level-btn');
+            const nextDiff = DIFFICULTY_SETTINGS[currentDifficulty].next;
+
+            if (nextDiff === 'normal') {
+                nextBtn.innerHTML = `<span>NORMAL (4x4) へ挑戦</span> <i class="fa-solid fa-arrow-right"></i>`;
+            } else if (nextDiff === 'hard') {
+                nextBtn.innerHTML = `<span>HARD (6x6) へ挑戦</span> <i class="fa-solid fa-arrow-right"></i>`;
+            } else {
+                nextBtn.innerHTML = `<span>最初 (EASY) から遊ぶ</span> <i class="fa-solid fa-rotate-left"></i>`;
+            }
 
             // Display Clear Modal
             document.getElementById('clear-modal').classList.remove('hidden');
