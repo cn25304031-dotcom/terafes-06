@@ -27,7 +27,6 @@
             font-family: 'Orbitron', sans-serif;
         }
 
-        /* Animated Star Field Background */
         .stars-container {
             position: fixed;
             top: 0;
@@ -51,7 +50,6 @@
             100% { opacity: 1; transform: scale(1.2); }
         }
 
-        /* Neon UI Glow Effects */
         .neon-panel {
             background: rgba(15, 23, 42, 0.75);
             backdrop-filter: blur(12px);
@@ -59,22 +57,11 @@
             box-shadow: 0 0 20px rgba(56, 189, 248, 0.15), inset 0 0 15px rgba(56, 189, 248, 0.05);
         }
 
-        .neon-text-cyan {
-            text-shadow: 0 0 8px rgba(56, 189, 248, 0.8), 0 0 16px rgba(56, 189, 248, 0.4);
-        }
+        .neon-text-cyan { text-shadow: 0 0 8px rgba(56, 189, 248, 0.8), 0 0 16px rgba(56, 189, 248, 0.4); }
+        .neon-text-pink { text-shadow: 0 0 8px rgba(244, 114, 182, 0.8), 0 0 16px rgba(244, 114, 182, 0.4); }
+        .neon-text-amber { text-shadow: 0 0 8px rgba(251, 191, 36, 0.8), 0 0 16px rgba(251, 191, 36, 0.4); }
 
-        .neon-text-pink {
-            text-shadow: 0 0 8px rgba(244, 114, 182, 0.8), 0 0 16px rgba(244, 114, 182, 0.4);
-        }
-
-        .neon-text-amber {
-            text-shadow: 0 0 8px rgba(251, 191, 36, 0.8), 0 0 16px rgba(251, 191, 36, 0.4);
-        }
-
-        .card-container {
-            perspective: 1000px;
-        }
-
+        .card-container { perspective: 1000px; }
         .card-inner {
             position: relative;
             width: 100%;
@@ -84,22 +71,28 @@
             cursor: pointer;
         }
 
-        .card-container.flipped .card-inner {
+        .card-container.flipped .card-inner,
+        .card-container.matched .card-inner,
+        .card-container.hinted .card-inner {
             transform: rotateY(180deg);
         }
 
-        .card-container.matched .card-inner {
-            transform: rotateY(180deg);
-        }
-
-        .card-container.matched {
-            animation: pulse-match 0.5s ease-out;
-        }
+        .card-container.matched { animation: pulse-match 0.5s ease-out; }
 
         @keyframes pulse-match {
             0% { transform: scale(1); }
-            50% { transform: scale(1.08); }
+            50% { transform: scale(1.1); }
             100% { transform: scale(1); }
+        }
+
+        /* 画面振れ演出 */
+        .shake { animation: shake-anim 0.3s ease-in-out; }
+        @keyframes shake-anim {
+            0%, 100% { transform: translate(0, 0); }
+            20% { transform: translate(-8px, 6px); }
+            40% { transform: translate(8px, -6px); }
+            60% { transform: translate(-5px, 3px); }
+            80% { transform: translate(5px, -3px); }
         }
 
         .card-front, .card-back {
@@ -114,7 +107,6 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
         }
 
-        /* Back side of card (Hidden/Default face) */
         .card-back {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             border: 2px solid rgba(56, 189, 248, 0.4);
@@ -127,7 +119,6 @@
             box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
         }
 
-        /* Front side of card (Revealed face) */
         .card-front {
             background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
             border: 2px solid #a855f7;
@@ -141,18 +132,22 @@
             background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
         }
 
-        /* Dynamic Grid Layout Support */
+        .card-container.bomb .card-front {
+            border-color: #ef4444;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.8);
+            background: linear-gradient(135deg, #450a0a 0%, #180505 100%);
+        }
+
         .grid-2x2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .grid-4x4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         .grid-6x6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
     </style>
 </head>
-<body class="flex flex-col items-center justify-between min-h-screen p-3 md:p-6 relative">
+<body id="body-root" class="flex flex-col items-center justify-between min-h-screen p-3 md:p-6 relative overflow-x-hidden">
 
-    <!-- Starfield Particles Background -->
     <div class="stars-container" id="stars-bg"></div>
 
-    <header class="w-full max-w-4xl z-10 flex flex-wrap items-center justify-between gap-3 mb-3">
+    <header class="w-full max-w-4xl z-10 flex flex-wrap items-center justify-between gap-3 mb-2">
         <a href="index.jsp" class="px-4 py-2 bg-slate-800/80 hover:bg-slate-700/90 text-cyan-300 border border-cyan-500/40 rounded-xl text-xs font-bold font-orbitron transition flex items-center gap-2 shadow-lg">
             <i class="fa-solid fa-house"></i>
             <span>タイトルへ</span>
@@ -160,63 +155,79 @@
 
         <div class="flex items-center gap-2">
             <span class="text-xs text-slate-400 font-bold uppercase font-orbitron mr-1 hidden sm:inline">Difficulty:</span>
-            <button onclick="setDifficulty('easy')" id="btn-easy" class="diff-btn px-3 py-1.5 rounded-lg text-xs font-orbitron font-bold transition border border-cyan-500/30 text-slate-300 hover:text-white">
-                EASY (2x2)
-            </button>
-            <button onclick="setDifficulty('normal')" id="btn-normal" class="diff-btn px-3 py-1.5 rounded-lg text-xs font-orbitron font-bold transition border border-cyan-500/30 text-slate-300 hover:text-white">
-                NORMAL (4x4)
-            </button>
-            <button onclick="setDifficulty('hard')" id="btn-hard" class="diff-btn px-3 py-1.5 rounded-lg text-xs font-orbitron font-bold transition border border-cyan-500/30 text-slate-300 hover:text-white">
-                HARD (6x6)
-            </button>
+            <button onclick="setDifficulty('easy')" id="btn-easy" class="diff-btn px-3 py-1.5 rounded-lg text-xs font-orbitron font-bold transition border border-cyan-500/30 text-slate-300 hover:text-white">EASY (2x2)</button>
+            <button onclick="setDifficulty('normal')" id="btn-normal" class="diff-btn px-3 py-1.5 rounded-lg text-xs font-orbitron font-bold transition border border-cyan-500/30 text-slate-300 hover:text-white">NORMAL (4x4)</button>
+            <button onclick="setDifficulty('hard')" id="btn-hard" class="diff-btn px-3 py-1.5 rounded-lg text-xs font-orbitron font-bold transition border border-cyan-500/30 text-slate-300 hover:text-white">HARD (6x6)</button>
         </div>
     </header>
 
     <main class="w-full max-w-4xl z-10 flex flex-col items-center flex-1 justify-center">
-        <!-- Dashboard Panel (Score, Timer, Moves, Reset) -->
-        <div class="w-full neon-panel rounded-2xl p-3 md:p-4 mb-4 grid grid-cols-4 gap-2 text-center items-center">
+        <!-- Dashboard Panel -->
+        <div class="w-full neon-panel rounded-2xl p-3 md:p-4 mb-3 grid grid-cols-5 gap-2 text-center items-center">
             <!-- SCORE -->
             <div class="flex flex-col items-center">
                 <span class="text-[10px] md:text-xs text-cyan-400 font-orbitron tracking-wider uppercase font-bold">SCORE</span>
-                <span id="score-display" class="text-lg md:text-2xl font-black font-orbitron neon-text-cyan text-cyan-300">0</span>
+                <span id="score-display" class="text-base md:text-2xl font-black font-orbitron neon-text-cyan text-cyan-300">0</span>
+            </div>
+
+            <!-- COMBO -->
+            <div class="flex flex-col items-center border-l border-slate-700/60">
+                <span class="text-[10px] md:text-xs text-yellow-400 font-orbitron tracking-wider uppercase font-bold">COMBO</span>
+                <span id="combo-display" class="text-base md:text-2xl font-black font-orbitron text-yellow-300">x0</span>
             </div>
 
             <!-- TIMER -->
             <div class="flex flex-col items-center border-l border-slate-700/60">
                 <span class="text-[10px] md:text-xs text-pink-400 font-orbitron tracking-wider uppercase font-bold">TIMER</span>
-                <span id="timer-display" class="text-lg md:text-2xl font-black font-orbitron neon-text-pink text-pink-400">030</span>
+                <span id="timer-display" class="text-base md:text-2xl font-black font-orbitron neon-text-pink text-pink-400">030</span>
             </div>
 
             <!-- MOVES -->
             <div class="flex flex-col items-center border-l border-slate-700/60">
                 <span class="text-[10px] md:text-xs text-amber-400 font-orbitron tracking-wider uppercase font-bold">MOVES</span>
-                <span id="moves-display" class="text-lg md:text-2xl font-black font-orbitron neon-text-amber text-amber-300">0</span>
+                <span id="moves-display" class="text-base md:text-2xl font-black font-orbitron neon-text-amber text-amber-300">0</span>
             </div>
 
-            <!-- RESET BUTTON -->
-            <div class="flex items-center justify-center border-l border-slate-700/60">
-                <button onclick="resetGame()" class="w-full py-2 px-2 bg-gradient-to-r from-red-500/80 to-pink-600/80 hover:from-red-500 hover:to-pink-600 text-white font-bold font-orbitron text-xs rounded-xl shadow-md transition active:scale-95 border border-pink-400/30 flex items-center justify-center gap-1.5">
+            <!-- RESET / HINT -->
+            <div class="flex flex-col gap-1 items-center justify-center border-l border-slate-700/60">
+                <button id="hint-btn" onclick="useHint()" class="w-full py-1 px-1 bg-purple-600/80 hover:bg-purple-500 text-white font-bold font-orbitron text-[10px] md:text-xs rounded-lg shadow transition active:scale-95 border border-purple-400/40 flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-eye"></i>
+                    <span>HINT (1)</span>
+                </button>
+                <button onclick="resetGame()" class="w-full py-1 px-1 bg-red-600/80 hover:bg-red-500 text-white font-bold font-orbitron text-[10px] md:text-xs rounded-lg shadow transition active:scale-95 border border-red-400/40 flex items-center justify-center gap-1">
                     <i class="fa-solid fa-rotate-right"></i>
                     <span>RESET</span>
                 </button>
             </div>
         </div>
 
+        <!-- Combo Banner Pop-up -->
+        <div id="combo-banner" class="h-6 text-sm md:text-base font-black font-orbitron text-yellow-400 tracking-widest uppercase transition-opacity opacity-0 mb-1">
+            FEVER MODE x2!
+        </div>
+
         <div id="game-board-container" class="w-full flex items-center justify-center">
-            <div id="game-board" class="grid gap-2 md:gap-3 w-full max-w-2xl aspect-square p-2 neon-panel rounded-2xl">
-                <!-- Cards will be dynamically injected here by JS -->
-            </div>
+            <div id="game-board" class="grid gap-2 md:gap-3 w-full max-w-2xl aspect-square p-2.5 neon-panel rounded-2xl"></div>
         </div>
     </main>
 
-    <!-- Footer Space Branding -->
-    <footer class="z-10 mt-4 text-center text-slate-500 text-[10px] font-orbitron tracking-widest">
-        SPACE SHOOTER × CARD MATCHING SYSTEM &copy; 2026
+    <!-- 学園祭ハイスコア掲示板 (フッター上) -->
+    <div class="z-10 w-full max-w-4xl mt-3 neon-panel rounded-xl p-2.5 flex items-center justify-between text-xs font-orbitron">
+        <span class="text-amber-400 font-bold flex items-center gap-1">
+            <i class="fa-solid fa-crown text-yellow-400"></i> HIGH SCORES:
+        </span>
+        <div id="high-scores-list" class="flex gap-4 text-slate-300 font-bold">
+            <!-- JSで上位スコアを動的更新 -->
+        </div>
+    </div>
+
+    <footer class="z-10 mt-2 text-center text-slate-500 text-[10px] font-orbitron tracking-widest">
+        SPACE SHOOTER × CARD MATCHING FESTIVAL EDITION &copy; 2026
     </footer>
 
     <!-- CLEAR MODAL -->
     <div id="clear-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md hidden p-4">
-        <div class="neon-panel rounded-3xl p-6 md:p-8 max-w-md w-full text-center space-y-5 border-2 border-cyan-400 shadow-[0_0_50px_rgba(56,189,248,0.4)] transform scale-95 transition-all">
+        <div class="neon-panel rounded-3xl p-6 md:p-8 max-w-md w-full text-center space-y-5 border-2 border-cyan-400 shadow-[0_0_50px_rgba(56,189,248,0.4)]">
             <div class="text-5xl text-amber-400 animate-bounce">
                 <i class="fa-solid fa-trophy drop-shadow-[0_0_20px_rgba(251,191,36,0.8)]"></i>
             </div>
@@ -234,6 +245,10 @@
                     <span id="modal-time-bonus" class="font-bold font-orbitron text-amber-300">+0</span>
                 </div>
                 <div class="flex justify-between items-center text-slate-300">
+                    <span>最大コンボ:</span>
+                    <span id="modal-max-combo" class="font-bold font-orbitron text-yellow-300">x0</span>
+                </div>
+                <div class="flex justify-between items-center text-slate-300">
                     <span>総移動回数 (Moves):</span>
                     <span id="modal-moves" class="font-bold font-orbitron text-purple-300">0</span>
                 </div>
@@ -245,7 +260,6 @@
             </div>
 
             <div class="flex flex-col gap-2.5">
-                <!-- NEXT LEVEL BUTTON -->
                 <button id="next-level-btn" onclick="nextLevel()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black font-orbitron rounded-xl shadow-lg transition active:scale-95 text-xs md:text-sm uppercase tracking-wider flex items-center justify-center gap-2">
                     <span>次のレベルへ</span>
                     <i class="fa-solid fa-arrow-right"></i>
@@ -286,7 +300,53 @@
     </div>
 
     <script>
-        // Space Cosmic Icons Pool
+        // Web Audio API による即時効果音（ファイル読み込み不要）
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+            if (type === 'flip') {
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now); osc.stop(now + 0.08);
+            } else if (type === 'match') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(659.25, now + 0.08);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now); osc.stop(now + 0.25);
+            } else if (type === 'combo') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(587.33, now);
+                osc.frequency.setValueAtTime(880, now + 0.1);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } else if (type === 'bomb') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } else if (type === 'over') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.5);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+                osc.start(now); osc.stop(now + 0.5);
+            }
+        }
+
         const ICON_POOL = [
             { icon: 'fa-rocket', color: 'text-pink-400' },
             { icon: 'fa-user-astronaut', color: 'text-cyan-300' },
@@ -305,37 +365,24 @@
             { icon: 'fa-gem', color: 'text-fuchsia-400' },
             { icon: 'fa-eye', color: 'text-violet-400' },
             { icon: 'fa-radiation', color: 'text-lime-400' },
-            { icon: 'fa-crosshairs', color: 'text-red-400' },
-            { icon: 'fa-magnet', color: 'text-pink-500' },
-            { icon: 'fa-compact-disc', color: 'text-cyan-200' },
-            { icon: 'fa-circle-nodes', color: 'text-emerald-300' },
-            { icon: 'fa-globe', color: 'text-sky-300' },
-            { icon: 'fa-certificate', color: 'text-yellow-400' },
-            { icon: 'fa-ring', color: 'text-purple-300' },
-            { icon: 'fa-database', color: 'text-blue-500' },
-            { icon: 'fa-terminal', color: 'text-green-400' },
-            { icon: 'fa-network-wired', color: 'text-teal-400' },
-            { icon: 'fa-wifi', color: 'text-cyan-100' },
-            { icon: 'fa-microchip', color: 'text-amber-500' },
-            { icon: 'fa-key', color: 'text-yellow-200' },
-            { icon: 'fa-gear', color: 'text-slate-300' },
-            { icon: 'fa-skull', color: 'text-red-300' }
+            { icon: 'fa-crosshairs', color: 'text-red-400' }
         ];
 
-        // Config per Difficulty
         const DIFFICULTY_SETTINGS = {
-            easy: { grid: 2, pairs: 2, time: 30, fontScale: 'text-4xl md:text-6xl', next: 'normal' },
-            normal: { grid: 4, pairs: 8, time: 60, fontScale: 'text-2xl md:text-4xl', next: 'hard' },
-            hard: { grid: 6, pairs: 18, time: 120, fontScale: 'text-lg md:text-2xl', next: null }
+            easy: { grid: 2, pairs: 2, time: 30, fontScale: 'text-4xl md:text-6xl', hasBomb: false, next: 'normal' },
+            normal: { grid: 4, pairs: 8, time: 60, fontScale: 'text-2xl md:text-4xl', hasBomb: false, next: 'hard' },
+            hard: { grid: 6, pairs: 17, time: 120, fontScale: 'text-lg md:text-2xl', hasBomb: true, next: null }
         };
 
-        // Game State Variables
         let currentDifficulty = 'easy';
         let cards = [];
         let flippedCards = [];
         let matchedPairs = 0;
         let score = 0;
         let moves = 0;
+        let combo = 0;
+        let maxCombo = 0;
+        let hintUsed = false;
         let timer = 0;
         let timerInterval = null;
         let isBoardLocked = false;
@@ -344,8 +391,7 @@
         function createStars() {
             const container = document.getElementById('stars-bg');
             container.innerHTML = '';
-            const starCount = 70;
-            for (let i = 0; i < starCount; i++) {
+            for (let i = 0; i < 70; i++) {
                 const star = document.createElement('div');
                 star.className = 'star';
                 const size = Math.random() * 2.5 + 1;
@@ -361,8 +407,6 @@
 
         function setDifficulty(diff) {
             currentDifficulty = diff;
-            
-            // Update UI Button Styles
             document.querySelectorAll('.diff-btn').forEach(btn => {
                 btn.classList.remove('bg-cyan-500', 'text-black', 'shadow-lg', 'shadow-cyan-500/30');
                 btn.classList.add('text-slate-300');
@@ -372,17 +416,12 @@
                 activeBtn.classList.add('bg-cyan-500', 'text-black', 'shadow-lg', 'shadow-cyan-500/30');
                 activeBtn.classList.remove('text-slate-300');
             }
-
             resetGame();
         }
 
         function nextLevel() {
             const nextDiff = DIFFICULTY_SETTINGS[currentDifficulty].next;
-            if (nextDiff) {
-                setDifficulty(nextDiff);
-            } else {
-                setDifficulty('easy'); // 全難易度クリア時はEASYに戻る
-            }
+            setDifficulty(nextDiff ? nextDiff : 'easy');
         }
 
         function resetGame() {
@@ -392,41 +431,48 @@
             const setting = DIFFICULTY_SETTINGS[currentDifficulty];
             score = 0;
             moves = 0;
+            combo = 0;
+            maxCombo = 0;
             matchedPairs = 0;
+            hintUsed = false;
             timer = setting.time;
             flippedCards = [];
             isBoardLocked = false;
             isGameStarted = false;
 
-            // Update Displays
-            updateHUD();
+            const hintBtn = document.getElementById('hint-btn');
+            hintBtn.disabled = false;
+            hintBtn.classList.remove('opacity-50', 'cursor-not-allowed');
 
-            // Hide Modals
+            updateHUD();
             document.getElementById('clear-modal').classList.add('hidden');
             document.getElementById('gameover-modal').classList.add('hidden');
 
-            // Generate Cards
             generateBoard(setting);
+            renderHighScores();
         }
 
         function updateHUD() {
             document.getElementById('score-display').textContent = score;
             document.getElementById('timer-display').textContent = String(timer).padStart(3, '0');
             document.getElementById('moves-display').textContent = moves;
+            document.getElementById('combo-display').textContent = `x${combo}`;
         }
 
         function generateBoard(setting) {
             const board = document.getElementById('game-board');
             board.innerHTML = '';
-
-            // Apply grid column classes
             board.className = `grid gap-1.5 md:gap-2.5 w-full max-w-2xl aspect-square p-2.5 neon-panel rounded-2xl grid-${setting.grid}x${setting.grid}`;
 
-            // Select Icons for current difficulty
-            const selectedIcons = ICON_POOL.slice(0, setting.pairs);
-            const deck = [...selectedIcons, ...selectedIcons]; // Pair duplicating
+            let selectedIcons = ICON_POOL.slice(0, setting.pairs);
+            let deck = [...selectedIcons, ...selectedIcons];
 
-            // Shuffle Deck (Fisher-Yates)
+            // 爆弾カード追加（Hardモード用）
+            if (setting.hasBomb) {
+                deck.push({ icon: 'fa-bomb', color: 'text-red-500', isBomb: true });
+                deck.push({ icon: 'fa-bomb', color: 'text-red-500', isBomb: true });
+            }
+
             for (let i = deck.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -434,9 +480,10 @@
 
             cards = deck.map((item, index) => {
                 const cardEl = document.createElement('div');
-                cardEl.className = 'card-container w-full h-full';
+                cardEl.className = `card-container w-full h-full ${item.isBomb ? 'bomb' : ''}`;
                 cardEl.dataset.id = index;
                 cardEl.dataset.icon = item.icon;
+                if (item.isBomb) cardEl.dataset.isBomb = "true";
 
                 cardEl.innerHTML = `
                     <div class="card-inner">
@@ -455,6 +502,24 @@
             });
         }
 
+        function useHint() {
+            if (hintUsed || isBoardLocked) return;
+            hintUsed = true;
+            const hintBtn = document.getElementById('hint-btn');
+            hintBtn.disabled = true;
+            hintBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            cards.forEach(card => {
+                if (!card.classList.contains('matched') && !card.classList.contains('flipped')) {
+                    card.classList.add('hinted');
+                }
+            });
+
+            setTimeout(() => {
+                cards.forEach(card => card.classList.remove('hinted'));
+            }, 1200);
+        }
+
         function startTimer() {
             if (isGameStarted) return;
             isGameStarted = true;
@@ -462,9 +527,9 @@
             timerInterval = setInterval(() => {
                 timer--;
                 document.getElementById('timer-display').textContent = String(timer).padStart(3, '0');
-
                 if (timer <= 0) {
                     clearInterval(timerInterval);
+                    playSound('over');
                     handleGameOver();
                 }
             }, 1000);
@@ -474,20 +539,43 @@
             if (isBoardLocked) return;
             if (cardEl.classList.contains('flipped') || cardEl.classList.contains('matched')) return;
 
-            // Start Timer on First Turn
-            if (!isGameStarted) {
-                startTimer();
+            if (!isGameStarted) startTimer();
+
+            playSound('flip');
+            cardEl.classList.add('flipped');
+
+            // 爆弾処理
+            if (cardEl.dataset.isBomb === "true") {
+                playSound('bomb');
+                triggerShake();
+                timer = Math.max(0, timer - 5);
+                updateHUD();
+                setTimeout(() => {
+                    cardEl.classList.remove('flipped');
+                }, 800);
+                return;
             }
 
-            // Flip Card
-            cardEl.classList.add('flipped');
             flippedCards.push(cardEl);
 
             if (flippedCards.length === 2) {
                 moves++;
-                document.getElementById('moves-display').textContent = moves;
+                updateHUD();
                 checkPairMatch();
             }
+        }
+
+        function triggerShake() {
+            const body = document.getElementById('body-root');
+            body.classList.add('shake');
+            setTimeout(() => body.classList.remove('shake'), 300);
+        }
+
+        function triggerComboBanner(multiplier) {
+            const banner = document.getElementById('combo-banner');
+            banner.textContent = `🔥 FEVER COMBO x${multiplier}! 🔥`;
+            banner.classList.remove('opacity-0');
+            setTimeout(() => banner.classList.add('opacity-0'), 1000);
         }
 
         function checkPairMatch() {
@@ -496,33 +584,62 @@
             const isMatch = card1.dataset.icon === card2.dataset.icon;
 
             if (isMatch) {
-                // Match Found
+                combo++;
+                if (combo > maxCombo) maxCombo = combo;
+
+                if (combo > 1) {
+                    playSound('combo');
+                    triggerComboBanner(combo);
+                } else {
+                    playSound('match');
+                }
+
                 setTimeout(() => {
                     card1.classList.add('matched');
                     card2.classList.add('matched');
                     flippedCards = [];
                     isBoardLocked = false;
 
-                    score += 100;
+                    score += 100 * combo;
                     matchedPairs++;
                     updateHUD();
 
-                    // Check Clear Condition
                     if (matchedPairs === DIFFICULTY_SETTINGS[currentDifficulty].pairs) {
                         handleGameClear();
                     }
                 }, 300);
             } else {
-                // Miss Pair
+                combo = 0; // コンボリセット
                 setTimeout(() => {
                     card1.classList.remove('flipped');
                     card2.classList.remove('flipped');
                     flippedCards = [];
                     isBoardLocked = false;
 
-                    score = Math.max(0, score - 10); // Deduct 10 points (min 0)
+                    score = Math.max(0, score - 10);
                     updateHUD();
                 }, 800);
+            }
+        }
+
+        function saveHighScore(finalScore) {
+            let key = `matching_hs_${currentDifficulty}`;
+            let scores = JSON.parse(localStorage.getItem(key) || "[]");
+            scores.push(finalScore);
+            scores.sort((a, b) => b - a);
+            scores = scores.slice(0, 3);
+            localStorage.setItem(key, JSON.stringify(scores));
+            renderHighScores();
+        }
+
+        function renderHighScores() {
+            let key = `matching_hs_${currentDifficulty}`;
+            let scores = JSON.parse(localStorage.getItem(key) || "[]");
+            const container = document.getElementById('high-scores-list');
+            if (scores.length === 0) {
+                container.innerHTML = `<span class="text-slate-500">NO RECORDS YET</span>`;
+            } else {
+                container.innerHTML = scores.map((s, i) => `<span>#${i+1}: <span class="text-cyan-300">${s}</span></span>`).join('');
             }
         }
 
@@ -532,12 +649,14 @@
             const timeBonus = timer * 10;
             const finalScore = score + timeBonus;
 
+            saveHighScore(finalScore);
+
             document.getElementById('modal-base-score').textContent = score;
             document.getElementById('modal-time-bonus').textContent = `+${timeBonus}`;
+            document.getElementById('modal-max-combo').textContent = `x${maxCombo}`;
             document.getElementById('modal-moves').textContent = moves;
             document.getElementById('modal-final-score').textContent = finalScore;
 
-            // 「次のレベルへ」ボタンのラベル切り替え
             const nextBtn = document.getElementById('next-level-btn');
             const nextDiff = DIFFICULTY_SETTINGS[currentDifficulty].next;
 
@@ -549,16 +668,10 @@
                 nextBtn.innerHTML = `<span>最初 (EASY) から遊ぶ</span> <i class="fa-solid fa-rotate-left"></i>`;
             }
 
-            // Display Clear Modal
             document.getElementById('clear-modal').classList.remove('hidden');
 
-            // Trigger Victory Confetti
             if (typeof confetti === 'function') {
-                confetti({
-                    particleCount: 120,
-                    spread: 80,
-                    origin: { y: 0.6 }
-                });
+                confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
             }
         }
 
@@ -567,7 +680,6 @@
             document.getElementById('gameover-modal').classList.remove('hidden');
         }
 
-        // On Window Load Initialization
         window.onload = function() {
             createStars();
             setDifficulty('easy');
