@@ -142,9 +142,9 @@
         }
 
         /* Dynamic Grid Layout Support */
+        .grid-2x2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .grid-4x4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         .grid-6x6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-        .grid-8x8 { grid-template-columns: repeat(8, minmax(0, 1fr)); }
     </style>
 </head>
 <body class="flex flex-col items-center justify-between min-h-screen p-3 md:p-6 relative">
@@ -161,13 +161,13 @@
         <div class="flex items-center gap-2">
             <span class="text-xs text-slate-400 font-bold uppercase font-orbitron mr-1 hidden sm:inline">Difficulty:</span>
             <button onclick="setDifficulty('easy')" id="btn-easy" class="diff-btn px-3 py-1.5 rounded-lg text-xs font-orbitron font-bold transition border border-cyan-500/30 text-slate-300 hover:text-white">
-                EASY (4x4)
+                EASY (2x2)
             </button>
             <button onclick="setDifficulty('normal')" id="btn-normal" class="diff-btn px-3 py-1.5 rounded-lg text-xs font-orbitron font-bold transition border border-cyan-500/30 text-slate-300 hover:text-white">
-                NORMAL (6x6)
+                NORMAL (4x4)
             </button>
             <button onclick="setDifficulty('hard')" id="btn-hard" class="diff-btn px-3 py-1.5 rounded-lg text-xs font-orbitron font-bold transition border border-cyan-500/30 text-slate-300 hover:text-white">
-                HARD (8x8)
+                HARD (6x6)
             </button>
         </div>
     </header>
@@ -184,7 +184,7 @@
             <!-- TIMER -->
             <div class="flex flex-col items-center border-l border-slate-700/60">
                 <span class="text-[10px] md:text-xs text-pink-400 font-orbitron tracking-wider uppercase font-bold">TIMER</span>
-                <span id="timer-display" class="text-lg md:text-2xl font-black font-orbitron neon-text-pink text-pink-400">060</span>
+                <span id="timer-display" class="text-lg md:text-2xl font-black font-orbitron neon-text-pink text-pink-400">030</span>
             </div>
 
             <!-- MOVES -->
@@ -314,9 +314,9 @@
 
         // Config per Difficulty
         const DIFFICULTY_SETTINGS = {
-            easy: { grid: 4, pairs: 8, time: 60, fontScale: 'text-2xl md:text-4xl' },
-            normal: { grid: 6, pairs: 18, time: 120, fontScale: 'text-lg md:text-2xl' },
-            hard: { grid: 8, pairs: 32, time: 180, fontScale: 'text-sm md:text-lg' }
+            easy: { grid: 2, pairs: 2, time: 30, fontScale: 'text-4xl md:text-6xl' },
+            normal: { grid: 4, pairs: 8, time: 60, fontScale: 'text-2xl md:text-4xl' },
+            hard: { grid: 6, pairs: 18, time: 120, fontScale: 'text-lg md:text-2xl' }
         };
 
         // Game State Variables
