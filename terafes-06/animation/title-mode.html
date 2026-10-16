@@ -178,19 +178,22 @@ body { background: #04050a; }
 .btn-text:hover::after { transform: scaleX(1); }
 
 /* ================= mode select ================= */
-.back { display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 20px 0 14px; border-radius: 999px;
-  border: 1px solid var(--line); background: rgba(10, 12, 22, .55); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-  font-size: 13px; font-weight: 500; letter-spacing: .04em; color: var(--text);
-  transition: transform .35s var(--ease), border-color .3s, background .3s; }
-.back svg { width: 18px; height: 18px; transition: transform .35s var(--ease); }
-.back:hover { border-color: rgba(255, 255, 255, .24); background: rgba(255, 255, 255, .07); }
-.back:hover svg { transform: translateX(-4px); }
+.back-row { margin-top: auto; padding-top: 28px; }
+.back { position: relative; display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; height: 62px; border-radius: 999px;
+  border: 1.5px solid rgba(255, 255, 255, .28); background: rgba(255, 255, 255, .06); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  font-size: 17px; font-weight: 600; letter-spacing: .08em; color: var(--text);
+  box-shadow: 0 10px 30px -16px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .12);
+  transition: transform .35s var(--ease), border-color .3s, background .3s, box-shadow .3s; }
+.back svg { width: 24px; height: 24px; stroke-width: 2.2; transition: transform .35s var(--ease); }
+.back:hover { border-color: var(--cyan); background: rgba(95, 212, 255, .12); box-shadow: 0 14px 34px -14px color-mix(in srgb, var(--cyan) 60%, transparent), inset 0 1px 0 rgba(255, 255, 255, .15); }
+.back:hover svg { transform: translateX(-6px); }
 .back:active { transform: scale(.97); }
 .hero-sm { flex: 0 0 auto; padding: 56px 0 36px; justify-content: flex-start; }
 .heading { font-size: 28px; font-weight: 500; letter-spacing: -.01em; }
 .sub { margin-top: 10px; font-size: 14px; color: var(--muted); }
 
 .game-list { display: flex; flex-direction: column; gap: 16px; }
+#screen-mode { padding-bottom: max(28px, env(safe-area-inset-bottom)); }
 .game {
   --accent: var(--cyan); --mx: 50%; --my: 50%;
   position: relative; overflow: hidden; isolation: isolate;
@@ -473,12 +476,7 @@ html[data-theme="light"] .grab { background: rgba(12, 18, 38, .2); }
 
   <!-- ===== 2. MODE SELECT ===== -->
   <section class="screen" id="screen-mode">
-    <header class="top reveal" style="--d:.05s">
-      <button class="back" id="btn-back" aria-label="戻る">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
-        <span data-i18n="back">戻る</span>
-      </button>
-    </header>
+    <header class="top" aria-hidden="true"></header>
 
     <section class="hero hero-sm">
       <h2 class="heading reveal" style="--d:.15s" data-i18n="heading">ゲームを選んでください</h2>
@@ -486,6 +484,13 @@ html[data-theme="light"] .grab { background: rgba(12, 18, 38, .2); }
     </section>
 
     <div class="game-list" id="game-list"><!-- rendered from GAMES in js/main.js --></div>
+
+    <div class="back-row reveal" style="--d:.7s">
+      <button class="back" id="btn-back" aria-label="戻る">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+        <span data-i18n="back">戻る</span>
+      </button>
+    </div>
   </section>
 
   <!-- ===== HOW TO PLAY ===== -->
@@ -549,7 +554,7 @@ const I18N = {
     start: 'ဂိမ်းစတင်ပါ', howto: 'ကစားနည်း', mode: 'မုဒ်', close: 'ပိတ်ပါ', back: 'နောက်သို့',
     heading: 'ဂိမ်းကို ရွေးချယ်ပါ', sub: 'ကစားလိုသော ဂိမ်းကို နှိပ်ပါ',
     descShooter: 'ရန်သူများကို ချေမှုန်းပြီး ရမှတ်များ ရယူပါ', descCards: 'ကတ်များကို လှန်ပြီး တူညီသော အတွဲများကို ရှာပါ',
-    how1: 'ဒုံးပျံကို ရွှေ့ပြီး ပစ်ခတ်ကာ ရန်သူများကို ချေမှုန်းပြီး ရမှတ်ရယူပါ။ ❤️များ ကုန်သွားလျှင် ဂိမ်းပြီးဆုံးပါမည်။',
+    how1: 'ဒုံးပျံကို ရွှေ့ပြီး ပစ်ခတ်ကာ ရန်သူများကို ချေမှုန်းပြီး ရမှတ်ရယူပါ။ နှလုံးများ ကုန်သွားလျှင် ဂိမ်းပြီးဆုံးပါမည်။',
     how2: 'ကတ်နှစ်ရွက်စီကို လှန်ပြီး တူညီသော ပုံများကို ရှာပါ။ အနည်းဆုံး အကြိမ်ရေနှင့် အတိုဆုံး အချိန်ဖြင့် ပြီးအောင် ကစားပါ။',
     soon: '{name} ကို မကြာမီ ထည့်သွင်းပါမည် (အဖွဲ့က ဖန်တီးနေဆဲ ဖြစ်ပါသည်)',
     sound: 'အသံ', soundOn: 'အသံ ဖွင့်ထားသည်', soundOff: 'အသံ ပိတ်ထားသည်', language: 'ဘာသာစကား',
