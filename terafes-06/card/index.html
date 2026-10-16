@@ -1,0 +1,180 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPACE SHOOTER × CARD MATCHING</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="card.js" defer></script>
+</head>
+<body>
+    <div id="stars-bg"></div>
+
+    <header class="header">
+        <div class="logo">🚀 SPACE MATCH</div>
+        <button id="sound-btn" class="sound-btn" onclick="toggleSound()">
+            🔊 SOUND ON
+        </button>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <p class="subtitle">GALAXY MISSION</p>
+            <h1>SPACE SHOOTER <span>×</span><br>CARD MATCHING</h1>
+            <p class="description">
+                同じ宇宙カードを見つけて、銀河を救え！
+            </p>
+        </section>
+
+        <section class="difficulty">
+            <button id="btn-easy" onclick="setDifficulty('easy')">
+                EASY
+            </button>
+            <button id="btn-normal" class="selected"
+                    onclick="setDifficulty('normal')">
+                NORMAL
+            </button>
+            <button id="btn-hard" onclick="setDifficulty('hard')">
+                HARD
+            </button>
+        </section>
+
+        <section class="mission-panel">
+            <div>
+                <span class="small-label">MISSION</span>
+                <h2 id="mission-title">銀河の記憶を取り戻せ！</h2>
+                <p id="mission-description">
+                    すべてのペアを見つけよう。
+                </p>
+            </div>
+            <div class="level-box">
+                <span>LEVEL</span>
+                <strong id="level-display">1</strong>
+            </div>
+            <div class="progress-area">
+                <div class="progress-track">
+                    <div id="mission-progress"></div>
+                </div>
+                <p id="mission-progress-text">0 / 5 ペア</p>
+            </div>
+        </section>
+
+        <section class="stats">
+            <div class="stat-card">
+                <span>SCORE</span>
+                <strong id="score-display">0</strong>
+            </div>
+            <div class="stat-card combo-card" id="combo-card">
+                <span>COMBO</span>
+                <strong id="combo-display">×0</strong>
+                <small id="combo-caption">連続成功を目指そう！</small>
+            </div>
+            <div class="stat-card timer-card" id="timer-card">
+                <span>TIME</span>
+                <strong id="timer-display">060</strong>
+            </div>
+            <div class="stat-card moves-card" id="moves-card">
+                <span>MOVES</span>
+                <strong id="moves-display">0</strong>
+            </div>
+        </section>
+
+        <div id="combo-banner" class="combo-banner">
+            <span id="combo-banner-text">COMBO ×3!</span>
+        </div>
+
+        <section class="game-section">
+            <div class="game-heading">
+                <h2>🪐 SPACE DECK</h2>
+                <span id="pairs-display">PAIRS: 0 / 5</span>
+            </div>
+
+            <div id="game-board" class="game-board"></div>
+
+            <div class="game-controls">
+                <button id="hint-btn" class="secondary-btn"
+                        onclick="useHint()">
+                    💡 ヒント <span id="hint-count">2</span>
+                </button>
+                <button id="reset-btn" class="secondary-btn"
+                        onclick="resetGame()">
+                    🔄 リスタート
+                </button>
+            </div>
+            <p id="hint-text" class="hint-text">
+                カードを2枚選んでペアを見つけよう！
+            </p>
+            <p id="tip-text" class="tip-text">
+                💥 爆弾カードに注意！ NORMAL・HARDではペナルティがあるよ。
+            </p>
+        </section>
+
+        <section class="ranking-section">
+            <h2>🏆 GALAXY RANKING</h2>
+            <p class="section-description">
+                このブラウザに保存されたハイスコア
+            </p>
+            <ol id="high-scores-list" class="ranking-list"></ol>
+        </section>
+    </main>
+
+    <!-- クリア画面 -->
+    <div id="clear-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-icon">🌌</div>
+            <p class="subtitle">MISSION COMPLETE</p>
+            <h2>銀河を救った！</h2>
+            <p>おめでとう！すべてのペアを発見しました。</p>
+
+            <div class="result-list">
+                <p>基本スコア <strong id="modal-base-score">0</strong></p>
+                <p>タイムボーナス <strong id="modal-time-bonus">0</strong></p>
+                <p>最大コンボ <strong id="modal-max-combo">×0</strong></p>
+                <p>手数 <strong id="modal-moves">0</strong></p>
+                <p>最終スコア <strong id="modal-final-score">0</strong></p>
+            </div>
+
+            <form id="ranking-form">
+                <label for="player-name">ランキングに名前を登録</label>
+                <input id="player-name" type="text"
+                       maxlength="12" placeholder="プレイヤー名"
+                       autocomplete="nickname" required>
+                <button id="save-score-btn" class="primary-btn" type="submit">
+                    🏆 スコアを保存
+                </button>
+                <p id="ranking-message"></p>
+            </form>
+
+            <button id="next-level-btn" class="primary-btn"
+                    onclick="nextLevel()">
+                🚀 次のレベルへ
+            </button>
+            <button class="text-btn" onclick="resetGame()">
+                最初からプレイ
+            </button>
+        </div>
+    </div>
+
+    <!-- ゲームオーバー画面 -->
+    <div id="gameover-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-icon">💥</div>
+            <p class="subtitle">MISSION FAILED</p>
+            <h2>タイムアップ！</h2>
+            <p>次はもっと速くペアを見つけよう。</p>
+            <p class="final-result">
+                スコア：<strong id="gameover-score">0</strong>
+            </p>
+            <button class="primary-btn" onclick="resetGame()">
+                🔄 もう一度挑戦
+            </button>
+        </div>
+    </div>
+
+    <div id="bomb-alert" class="bomb-alert">💥 BOOM! -5秒 / -50点</div>
+    <div id="levelup-overlay" class="levelup-overlay">
+        <div>🚀 LEVEL UP!</div>
+    </div>
+</body>
+</html>
