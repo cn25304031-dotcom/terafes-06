@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Shooter</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="game.js" defer></script>
+</head>
+<body>
+    <main class="game-container">
+        <header class="game-header">
+            <h1>🚀 SPACE SHOOTER</h1>
+            <p>宇宙を守れ！敵を倒してボスを撃破しよう！</p>
+        </header>
+
+        <section class="status-bar" aria-label="ゲームステータス">
+            <div class="status-item">
+                <span>SCORE</span>
+                <strong id="score">0</strong>
+            </div>
+            <div class="status-item">
+                <span>HP</span>
+                <strong id="hp">♥ ♥ ♥</strong>
+            </div>
+            <div class="status-item">
+                <span>POWER</span>
+                <strong id="power">1</strong>
+            </div>
+            <div class="status-item">
+                <span>BOSS HP</span>
+                <strong id="bossHp">---</strong>
+            </div>
+        </section>
+
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas" width="800" height="600"
+                    aria-label="スペースシューティングゲーム">
+            </canvas>
+
+            <div id="overlay" class="overlay">
+                <h2 id="overlayTitle">SPACE SHOOTER</h2>
+                <p id="overlayMessage">
+                    敵を倒して、ボスを撃破しよう！
+                </p>
+                <button id="startButton">GAME START</button>
+            </div>
+        </div>
+
+        <div class="boss-bar">
+            <span>BOSS</span>
+            <div class="boss-bar-track">
+                <div id="bossBarFill"></div>
+            </div>
+        </div>
+
+        <p class="best-score">
+            BEST SCORE: <strong id="bestScore">0</strong>
+        </p>
+
+        <section class="instructions">
+            <h2>操作方法</h2>
+            <p>移動：W A S D ／ 矢印キー</p>
+            <p>射撃：Spaceキー</p>
+            <p>一時停止・再開：Escキー</p>
+            <p>アイテム：落ちてくるアイテムに接触</p>
+        </section>
+    </main>
+</body>
+</html>
