@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Matching - SPACE SHOOTER × CARD MATCHING</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Card Logic -->
+    <script src="card.js" defer></script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            user-select: none;
+        }
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .stars-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: hidden; }
+        .star { position: absolute; background-color: #ffffff; border-radius: 50%; animation: infinite alternate animate-twinkle; }
+        @keyframes animate-twinkle { 0% { opacity: 0.2; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.2); } }
+        .neon-panel { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(56, 189, 248, 0.3); box-shadow: 0 0 20px rgba(56, 189, 248, 0.15), inset 0 0 15px rgba(56, 189, 248, 0.05); }
+        .neon-text-cyan { text-shadow: 0 0 8px rgba(56, 189, 248, 0.8), 0 0 16px rgba(56, 189, 248, 0.4); }
+        .neon-text-pink { text-shadow: 0 0 8px rgba(244, 114, 182, 0.8), 0 0 16px rgba(244, 114, 182, 0.4); }
+        .neon-text-amber { text-shadow: 0 0 8px rgba(251, 191, 36, 0.8), 0 0 16px rgba(251, 191, 36, 0.4); }
+        .card-container { perspective: 1000px; }
+        .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; cursor: pointer; }
+        .card-container.flipped .card-inner, .card-container.matched .card-inner, .card-container.hinted .card-inner { transform: rotateY(180deg); }
+        .card-container.matched { animation: pulse-match 0.5s ease-out; }
+        @keyframes pulse-match { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .shake { animation: shake-anim 0.3s ease-in-out; }
+        @keyframes shake-anim { 0%, 100% { transform: translate(0, 0); } 20% { transform: translate(-8px, 6px); } 40% { transform: translate(8px, -6px); } 60% { transform: translate(-5px, 3px); } 80% { transform: translate(5px, -3px); } }
+        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); }
+        .card-back { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 2px solid rgba(56, 189, 248, 0.4); color: #38bdf8; transition: all 0.2s; }
+        .card-container:hover .card-back { border-color: rgba(56, 189, 248, 0.8); box-shadow: 0 0 12px rgba(56, 189, 248, 0.4); }
+        .card-front { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); border: 2px solid #a855f7; box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); transform: rotateY(180deg); }
+        .card-container.matched .card-front { border-color: #34d399; box-shadow: 0 0 15px rgba(52, 211, 153, 0.5); background: linear-gradient(135deg, #064e3b 0%, #022c22 100%); }
+        .card-container.bomb .card-front { border-color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); background: linear-gradient(135deg, #450a0a 0%, #180505 100%); }
+        .grid-2x2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid-4x4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .grid-6x6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    </style>
+</head>
+<body id="body-root" class="flex flex-col items-center justify-between min-h-screen p-3 md:p-6 relative overflow-x-hidden">
+
+    <div class="stars-container" id="stars-bg"></div>
+
+    <header class="w-full max-w-4xl z-10 flex flex-wrap items-center justify-between gap-3 mb-2">
+        <a href="index.html" class="px-4 py-2 bg-slate-800/80 hover:bg-slate-700/90 text-cyan-300 border border-cyan-500/40 rounded-xl text-xs font-bold font-orbitron transition flex items-center gap-2 shadow-lg">
+            <i class="fa-solid fa-house"></i>
+            <span>タイトルへ</span>
+        </a>
+
+        <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400 font-bold uppercase font-orbitron mr-1 hidden sm:inline">Difficulty:</span>
+            <button onclick="setDifficulty('easy')" id="btn-easy" class="diff-btn px-3 py-1.5 rounded-lg text-xs font-orbitron font-bold transition border border-cyan-500/30 text-slate-300 hover:text-white">EASY (2x2)</button>
+            <button onclick="setDifficulty('normal')" id="btn-normal" class="diff-btn px-3 py-1.5 rounded-lg text-xs font-orbitron font-bold transition border border-cyan-500/30 text-slate-300 hover:text-white">NORMAL (4x4)</button>
+            <button onclick="setDifficulty('hard')" id="btn-hard" class="diff-btn px-3 py-1.5 rounded-lg text-xs font-orbitron font-bold transition border border-cyan-500/30 text-slate-300 hover:text-white">HARD (6x6)</button>
+        </div>
+    </header>
+
+    <main class="w-full max-w-4xl z-10 flex flex-col items-center flex-1 justify-center">
+        <div class="w-full neon-panel rounded-2xl p-3 md:p-4 mb-3 grid grid-cols-5 gap-2 text-center items-center">
+            <div class="flex flex-col items-center">
+                <span class="text-[10px] md:text-xs text-cyan-400 font-orbitron tracking-wider uppercase font-bold">SCORE</span>
+                <span id="score-display" class="text-base md:text-2xl font-black font-orbitron neon-text-cyan text-cyan-300">0</span>
+            </div>
+            <div class="flex flex-col items-center border-l border-slate-700/60">
+                <span class="text-[10px] md:text-xs text-yellow-400 font-orbitron tracking-wider uppercase font-bold">COMBO</span>
+                <span id="combo-display" class="text-base md:text-2xl font-black font-orbitron text-yellow-300">x0</span>
+            </div>
+            <div class="flex flex-col items-center border-l border-slate-700/60">
+                <span class="text-[10px] md:text-xs text-pink-400 font-orbitron tracking-wider uppercase font-bold">TIMER</span>
+                <span id="timer-display" class="text-base md:text-2xl font-black font-orbitron neon-text-pink text-pink-400">030</span>
+            </div>
+            <div class="flex flex-col items-center border-l border-slate-700/60">
+                <span class="text-[10px] md:text-xs text-amber-400 font-orbitron tracking-wider uppercase font-bold">MOVES</span>
+                <span id="moves-display" class="text-base md:text-2xl font-black font-orbitron neon-text-amber text-amber-300">0</span>
+            </div>
+            <div class="flex flex-col gap-1 items-center justify-center border-l border-slate-700/60">
+                <button id="hint-btn" onclick="useHint()" class="w-full py-1 px-1 bg-purple-600/80 hover:bg-purple-500 text-white font-bold font-orbitron text-[10px] md:text-xs rounded-lg shadow transition active:scale-95 border border-purple-400/40 flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-eye"></i>
+                    <span id="hint-text">HINT (1)</span>
+                </button>
+                <button onclick="resetGame()" class="w-full py-1 px-1 bg-red-600/80 hover:bg-red-500 text-white font-bold font-orbitron text-[10px] md:text-xs rounded-lg shadow transition active:scale-95 border border-red-400/40 flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span>RESET</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="combo-banner" class="h-6 text-sm md:text-base font-black font-orbitron text-yellow-400 tracking-widest uppercase transition-opacity opacity-0 mb-1">
+            FEVER MODE x2!
+        </div>
+
+        <div id="game-board-container" class="w-full flex items-center justify-center">
+            <div id="game-board" class="grid gap-2 md:gap-3 w-full max-w-2xl aspect-square p-2.5 neon-panel rounded-2xl"></div>
+        </div>
+    </main>
+
+    <div class="z-10 w-full max-w-4xl mt-3 neon-panel rounded-xl p-2.5 flex items-center justify-between text-xs font-orbitron">
+        <span class="text-amber-400 font-bold flex items-center gap-1">
+            <i class="fa-solid fa-crown text-yellow-400"></i> HIGH SCORES:
+        </span>
+        <div id="high-scores-list" class="flex gap-4 text-slate-300 font-bold"></div>
+    </div>
+
+    <footer class="z-10 mt-2 text-center text-slate-500 text-[10px] font-orbitron tracking-widest">
+        SPACE SHOOTER × CARD MATCHING FESTIVAL EDITION &copy; 2026
+    </footer>
+
+    <!-- CLEAR MODAL -->
+    <div id="clear-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md hidden p-4">
+        <div class="neon-panel rounded-3xl p-6 md:p-8 max-w-md w-full text-center space-y-5 border-2 border-cyan-400 shadow-[0_0_50px_rgba(56,189,248,0.4)]">
+            <div class="text-5xl text-amber-400 animate-bounce">
+                <i class="fa-solid fa-trophy drop-shadow-[0_0_20px_rgba(251,191,36,0.8)]"></i>
+            </div>
+            <h2 class="text-2xl md:text-3xl font-black font-orbitron neon-text-cyan text-cyan-300 uppercase tracking-wider">
+                MISSION CLEAR!
+            </h2>
+            
+            <div class="bg-slate-900/80 rounded-2xl p-4 space-y-2 border border-slate-700 text-sm">
+                <div class="flex justify-between items-center text-slate-300">
+                    <span>基本スコア:</span>
+                    <span id="modal-base-score" class="font-bold font-orbitron text-cyan-300">0</span>
+                </div>
+                <div class="flex justify-between items-center text-slate-300">
+                    <span>タイムボーナス:</span>
+                    <span id="modal-time-bonus" class="font-bold font-orbitron text-amber-300">+0</span>
+                </div>
+                <div class="flex justify-between items-center text-slate-300">
+                    <span>最大コンボ:</span>
+                    <span id="modal-max-combo" class="font-bold font-orbitron text-yellow-300">x0</span>
+                </div>
+                <div class="flex justify-between items-center text-slate-300">
+                    <span>総移動回数 (Moves):</span>
+                    <span id="modal-moves" class="font-bold font-orbitron text-purple-300">0</span>
+                </div>
+                <hr class="border-slate-800 my-1">
+                <div class="flex justify-between items-center text-base font-extrabold text-white">
+                    <span>最終スコア:</span>
+                    <span id="modal-final-score" class="text-xl font-orbitron text-amber-400 neon-text-amber">0</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2.5">
+                <button id="next-level-btn" onclick="nextLevel()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black font-orbitron rounded-xl shadow-lg transition active:scale-95 text-xs md:text-sm uppercase tracking-wider flex items-center justify-center gap-2">
+                    <span>次のレベルへ</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+                <div class="flex gap-2.5">
+                    <button onclick="resetGame()" class="flex-1 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold font-orbitron rounded-xl shadow-lg transition active:scale-95 text-xs">
+                        もう一度あそぶ
+                    </button>
+                    <a href="index.html" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold font-orbitron rounded-xl border border-slate-600 transition flex items-center justify-center text-xs">
+                        タイトルへ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME OVER MODAL -->
+    <div id="gameover-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md hidden p-4">
+        <div class="neon-panel rounded-3xl p-6 md:p-8 max-w-md w-full text-center space-y-5 border-2 border-red-500 shadow-[0_0_50px_rgba(239,68,68,0.4)]">
+            <div class="text-5xl text-red-500 animate-pulse">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h2 class="text-2xl md:text-3xl font-black font-orbitron text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.8)] uppercase tracking-wider">
+                TIME UP - GAME OVER
+            </h2>
+            <p class="text-xs text-slate-300">制限時間内に全てのカードを揃えることができませんでした。</p>
+
+            <div class="flex gap-3 pt-2">
+                <button onclick="resetGame()" class="flex-1 py-3 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-500 hover:to-pink-500 text-white font-bold font-orbitron rounded-xl shadow-lg transition active:scale-95 text-xs md:text-sm">
+                    RETRY
+                </button>
+                <a href="index.html" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold font-orbitron rounded-xl border border-slate-600 transition flex items-center justify-center text-xs md:text-sm">
+                    タイトルへ
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

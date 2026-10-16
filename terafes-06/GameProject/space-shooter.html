@@ -7,9 +7,12 @@
     <link rel="stylesheet" href="style.css">
     <script src="game.js" defer></script>
 </head>
-<body>
+<body class="shooter-body">
     <main class="game-container">
         <header class="game-header">
+            <div style="text-align: left; margin-bottom: 10px;">
+                <a href="index.html" class="shooter-btn" style="display: inline-block; text-decoration: none; padding: 8px 16px; font-size: 12px;">← タイトルへ戻る</a>
+            </div>
             <h1>🚀 SPACE SHOOTER</h1>
             <p>宇宙を守れ！敵を倒してボスを撃破しよう！</p>
         </header>
@@ -34,16 +37,12 @@
         </section>
 
         <div class="canvas-wrapper">
-            <canvas id="gameCanvas" width="800" height="600"
-                    aria-label="スペースシューティングゲーム">
-            </canvas>
+            <canvas id="gameCanvas" width="800" height="600" aria-label="スペースシューティングゲーム"></canvas>
 
             <div id="overlay" class="overlay">
                 <h2 id="overlayTitle">SPACE SHOOTER</h2>
-                <p id="overlayMessage">
-                    敵を倒して、ボスを撃破しよう！
-                </p>
-                <button id="startButton">GAME START</button>
+                <p id="overlayMessage">敵を倒して、ボスを撃破しよう！</p>
+                <button id="startButton" class="shooter-btn">GAME START</button>
             </div>
         </div>
 

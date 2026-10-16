@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPACE SHOOTER × CARD MATCHING</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=Inter:wght@300;400;500;600&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+Myanmar:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="main.js" defer></script>
+</head>
+<body>
+  <div class="bg-mesh" aria-hidden="true"></div>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-beam" aria-hidden="true"></div>
+  <canvas id="stars" aria-hidden="true"></canvas>
+  <div class="bg-vignette" aria-hidden="true"></div>
+  <div class="bg-grain" aria-hidden="true"></div>
+  <div class="flash" id="flash" aria-hidden="true"></div>
+  <div class="corner">
+    <div class="sound-hint" id="sound-hint" data-i18n="tapHint">画面をタップするとBGMが流れます</div>
+    <div class="lang" id="lang">
+      <button class="lang-btn" id="lang-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Language">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 4 5.7 4 9s-1.4 6.3-4 9c-2.6-2.7-4-5.7-4-9s1.4-6.3 4-9z"/></svg>
+        <span id="lang-code">JA</span>
+      </button>
+      <div class="lang-menu" id="lang-menu" role="listbox" aria-label="Language" hidden></div>
+    </div>
+    <button class="sound on" id="btn-sound" aria-label="Sound" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path class="spk" d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/>
+        <path class="w1" d="M15.4 9.4a3.7 3.7 0 0 1 0 5.2"/>
+        <path class="w2" d="M18.1 6.8a7.4 7.4 0 0 1 0 10.4"/>
+        <path class="x" d="M16 9.6l5 4.8M21 9.6l-5 4.8"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- TITLE SCREEN -->
+  <main class="screen is-active" id="screen-title">
+    <header class="top reveal" style="--d:.1s">
+      <span class="mark"></span>
+      <span class="eyebrow">TERA FES 2026</span>
+    </header>
+
+    <section class="hero">
+      <h1 class="wordmark">
+        <span class="line"><span style="--d:.25s">Space Shooter</span></span>
+        <span class="times reveal" style="--d:.55s" aria-label="and"><i></i><b>×</b><i></i></span>
+        <span class="line"><span style="--d:.4s">Card Matching</span></span>
+      </h1>
+    </section>
+
+    <footer class="actions reveal" style="--d:1s">
+      <button class="btn btn-start" id="btn-start">
+        <span class="aura" aria-hidden="true"></span>
+        <span class="play-badge" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></span>
+        <span class="stack">
+          <span class="kicker">PRESS START</span>
+          <span class="label" data-i18n="start">ゲームスタート</span>
+        </span>
+        <svg class="go-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+      <button class="btn btn-help" id="btn-howto">
+        <span class="q" aria-hidden="true">?</span>
+        <span data-i18n="howto">遊び方</span>
+      </button>
+    </footer>
+  </main>
+
+  <!-- MODE SELECT SCREEN -->
+  <section class="screen" id="screen-mode">
+    <header class="top" aria-hidden="true"></header>
+
+    <section class="hero hero-sm">
+      <h2 class="heading reveal" style="--d:.15s" data-i18n="heading">ゲームを選んでください</h2>
+      <p class="sub reveal" style="--d:.25s" data-i18n="sub">遊びたいゲームをタップ</p>
+    </section>
+
+    <div class="game-list" id="game-list"></div>
+
+    <div class="back-row reveal" style="--d:.7s">
+      <button class="back" id="btn-back" aria-label="戻る">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+        <span data-i18n="back">戻る</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- HOW TO PLAY MODAL -->
+  <div class="modal" id="howto" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="howto-title">
+      <span class="grab" aria-hidden="true"></span>
+      <h2 id="howto-title" data-i18n="howto">遊び方</h2>
+      <dl>
+        <dt>Space Shooter</dt>
+        <dd data-i18n="how1">ロケットを動かして弾を撃ち、敵を倒してスコアを稼ぐ。ハートが0になると終了。</dd>
+        <dt>Card Matching</dt>
+        <dd data-i18n="how2">カードを2枚ずつめくり、同じ絵柄のペアを探す。少ない手数と短い時間でクリアを目指そう。</dd>
+      </dl>
+      <button class="btn btn-primary" id="btn-close"><span class="label" data-i18n="close">閉じる</span></button>
+    </div>
+  </div>
+</body>
+</html>
