@@ -1,0 +1,1036 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Matching - SPACE SHOOTER × CARD MATCHING</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti for Clear Effect -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+            color: #ffffff;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .stars-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .star {
+            position: absolute;
+            background-color: #ffffff;
+            border-radius: 50%;
+            animation: infinite alternate animate-twinkle;
+        }
+
+        @keyframes animate-twinkle {
+            0% { opacity: 0.2; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .neon-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.15), inset 0 0 15px rgba(56, 189, 248, 0.05);
+        }
+
+        .neon-text-cyan { text-shadow: 0 0 8px rgba(56, 189, 248, 0.8), 0 0 16px rgba(56, 189, 248, 0.4); }
+        .neon-text-pink { text-shadow: 0 0 8px rgba(244, 114, 182, 0.8), 0 0 16px rgba(244, 114, 182, 0.4); }
+        .neon-text-amber { text-shadow: 0 0 8px rgba(251, 191, 36, 0.8), 0 0 16px rgba(251, 191, 36, 0.4); }
+
+        .card-container { perspective: 1000px; }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .card-container.flipped .card-inner,
+        .card-container.matched .card-inner,
+        .card-container.hinted .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-container.matched { animation: pulse-match 0.5s ease-out; }
+
+        @keyframes pulse-match {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* 画面振れ演出 */
+        .shake { animation: shake-anim 0.3s ease-in-out; }
+        @keyframes shake-anim {
+            0%, 100% { transform: translate(0, 0); }
+            20% { transform: translate(-8px, 6px); }
+            40% { transform: translate(8px, -6px); }
+            60% { transform: translate(-5px, 3px); }
+            80% { transform: translate(5px, -3px); }
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid rgba(56, 189, 248, 0.4);
+            color: #38bdf8;
+            transition: all 0.2s;
+        }
+
+        .card-container:hover .card-back {
+            border-color: rgba(56, 189, 248, 0.8);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            border: 2px solid #a855f7;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+            transform: rotateY(180deg);
+        }
+
+        .card-container.matched .card-front {
+            border-color: #34d399;
+            box-shadow: 0 0 15px rgba(52, 211, 153, 0.5);
+            background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
+        }
+
+        .card-container.bomb .card-front {
+            border-color: #ef4444;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.8);
+            background: linear-gradient(135deg, #450a0a 0%, #180505 100%);
+        }
+
+        .grid-2x2 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); }
+        .grid-4x4 { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); }
+        .grid-6x6 { grid-template-columns: repeat(6, minmax(0, 1fr)); grid-template-rows: repeat(6, minmax(0, 1fr)); }
+
+        /* Board always fits the remaining screen as a square */
+        #game-board-container { flex: 1; min-height: 0; container-type: size; display: flex; align-items: center; justify-content: center; }
+        #game-board { width: min(100cqw, 100cqh); height: min(100cqw, 100cqh); }
+        .card-container { width: 100%; height: 100%; min-width: 0; min-height: 0; container-type: size; touch-action: manipulation; }
+        .card-front, .card-back { -webkit-backface-visibility: hidden; }
+        .card-inner { transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-container:not(.flipped):not(.matched):active .card-inner { transform: scale(0.95); }
+
+        /* 3D logo */
+        .logo3d {
+            font-size: 58cqmin; line-height: 1; display: block;
+            filter: drop-shadow(0 4px 3px rgba(0,0,0,.55)) drop-shadow(0 0 8px rgba(255,255,255,.25));
+            transform: translateZ(30px);
+            animation: float3d 2.2s ease-in-out infinite;
+        }
+        @keyframes float3d { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-6%) rotate(3deg); } }
+        .card-front {
+            background: radial-gradient(circle at 30% 25%, #ffffff 0%, #c7d2fe 35%, #6366f1 100%) !important;
+            border-color: #a855f7 !important;
+        }
+        .card-container.matched .card-front { background: radial-gradient(circle at 30% 25%, #ecfdf5 0%, #6ee7b7 45%, #059669 100%) !important; }
+        .card-container.bomb .card-front { background: radial-gradient(circle at 30% 25%, #fee2e2 0%, #f87171 45%, #991b1b 100%) !important; }
+        .card-back { background: radial-gradient(circle at 30% 25%, #334155 0%, #1e293b 45%, #0b1020 100%); }
+        .back-logo { font-size: 45cqmin; color: rgba(56,189,248,.75); filter: drop-shadow(0 3px 3px rgba(0,0,0,.7)) drop-shadow(0 0 6px rgba(56,189,248,.6)); }
+
+        /* ===== INTRO CINEMATIC ===== */
+        #intro { background: radial-gradient(ellipse at center, #0b1330 0%, #03050d 100%); transition: opacity .6s ease; }
+        #intro.out { opacity: 0; pointer-events: none; }
+        #intro .vignette { position:absolute; inset:0; pointer-events:none; background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,.75) 100%); }
+        .letterbox { position:absolute; left:0; right:0; height:0; background:#000; z-index:3; transition: height 1s ease; }
+        #intro.playing .letterbox { height: 7vh; }
+        .scene { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 1.25rem; opacity:0; pointer-events:none; transition: opacity .6s ease; z-index:2; }
+        .scene.show { opacity:1; pointer-events:auto; }
+        .scene.show .rise { animation: rise .8s cubic-bezier(.2,.8,.2,1) both; animation-delay: var(--d, 0s); }
+        .scene .rise { opacity:0; }
+        @keyframes rise { from { opacity:0; transform: translateY(24px) scale(.96); filter: blur(6px); } to { opacity:1; transform:none; filter:none; } }
+        .title-grad { background: linear-gradient(90deg,#67e8f9,#c084fc,#f472b6); -webkit-background-clip:text; background-clip:text; color:transparent; filter: drop-shadow(0 0 18px rgba(103,232,249,.45)); }
+        .emblem { font-size: clamp(3.5rem, 14vmin, 8rem); filter: drop-shadow(0 10px 10px rgba(0,0,0,.6)) drop-shadow(0 0 22px rgba(103,232,249,.5)); animation: spin3d 4s ease-in-out infinite; transform-style: preserve-3d; }
+        @keyframes spin3d { 0%,100% { transform: perspective(600px) rotateY(-25deg) rotateX(8deg); } 50% { transform: perspective(600px) rotateY(25deg) rotateX(-8deg) translateY(-8px); } }
+        .play-btn { position:relative; animation: pulse-glow 1.8s ease-in-out infinite; }
+        @keyframes pulse-glow { 0%,100% { box-shadow: 0 0 20px rgba(56,189,248,.5); transform: scale(1); } 50% { box-shadow: 0 0 45px rgba(56,189,248,.95); transform: scale(1.05); } }
+        .step-card { width: clamp(6.5rem, 26vw, 11rem); }
+        .count-num { font-size: clamp(6rem, 28vmin, 14rem); animation: pop .75s ease-out both; }
+        @keyframes pop { 0% { transform: scale(2.2); opacity:0; } 35% { transform: scale(1); opacity:1; } 100% { transform: scale(.9); opacity:.85; } }
+        #intro-progress { position:absolute; left:0; bottom:0; height:4px; width:0; z-index:4; background: linear-gradient(90deg,#22d3ee,#a855f7,#f472b6); box-shadow: 0 0 12px #22d3ee; }
+        #intro.playing #intro-progress { width:100%; transition: width 12.3s linear; }
+        #skip-btn { display:none; }
+        #intro.playing #skip-btn { display:flex; }
+        .dealing .card-container { animation: deal .55s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i) * 35ms); }
+        @keyframes deal { from { opacity:0; transform: translateY(-40px) scale(.6) rotate(-8deg); } to { opacity:1; transform:none; } }
+
+        /* Embedded inside title-mode.html (parent provides the BACK button) */
+        html.embedded body { padding-top: 58px; }
+        html.embedded header { justify-content: flex-end; }
+        html.embedded #home-link, html.embedded #scene-0 { display: none; }
+
+        /* ===== Intro: scattered cards ===== */
+        #play-stage { position:absolute; inset:0; z-index:2; pointer-events:none; opacity:0; transition: opacity .5s; }
+        #intro.playing #play-stage { opacity:1; }
+        #cap { position:absolute; left:0; right:0; top:calc(7vh + 14px); text-align:center; padding:0 16px; z-index:8; }
+        #cap.cap-anim { animation: rise .7s cubic-bezier(.2,.8,.2,1) both; }
+        #cap-t { font-family:'Orbitron',sans-serif; font-weight:900; letter-spacing:.14em; font-size:clamp(1.15rem,4.6vw,2.4rem); }
+        #cap-s { margin-top:6px; color:#bae6fd; font-size:clamp(.78rem,2.1vw,1.05rem); text-shadow:0 2px 8px #000; }
+        #cap-j { margin-top:2px; color:#94a3b8; font-size:clamp(.68rem,1.7vw,.85rem); }
+        #intro-count { margin-top:8px; font-family:'Orbitron',sans-serif; font-weight:800; color:#fde047; letter-spacing:.2em; font-size:clamp(.8rem,2vw,1rem); text-shadow:0 0 10px rgba(250,204,21,.6); }
+        #intro-rules { margin-top:6px; font-family:'Orbitron',sans-serif; color:#cbd5e1; font-size:clamp(.62rem,1.6vw,.8rem); letter-spacing:.06em; }
+        #cardfield { position:absolute; inset:0; }
+        .ic { position:absolute; left:0; top:0; width:var(--cs); height:var(--cs); transition: transform var(--t,.6s) cubic-bezier(.2,.8,.2,1); will-change:transform; }
+        .ic-in { width:100%; height:100%; perspective:600px; animation: drift 3s ease-in-out infinite alternate; }
+        .ic.settled .ic-in { animation:none; }
+        @keyframes drift { from { transform: translate(-6px,-8px) rotate(-5deg); } to { transform: translate(6px,8px) rotate(5deg); } }
+        .flipper { position:relative; width:100%; height:100%; transform-style:preserve-3d; transition: transform .55s; }
+        .ic.flipcard .flipper { transform: rotateY(180deg); }
+        .ic .f, .ic .b { position:absolute; inset:0; border-radius:16%; display:flex; align-items:center; justify-content:center; -webkit-backface-visibility:hidden; backface-visibility:hidden; box-shadow:0 8px 18px rgba(0,0,0,.55); }
+        .ic .f { background:radial-gradient(circle at 30% 25%,#fff 0%,#c7d2fe 35%,#6366f1 100%); border:2px solid #a855f7; }
+        .ic .b { transform:rotateY(180deg); background:radial-gradient(circle at 30% 25%,#334155 0%,#1e293b 45%,#0b1020 100%); border:2px solid rgba(56,189,248,.65); color:rgba(56,189,248,.85); font-size:calc(var(--cs)*.4); }
+        .ilogo { font-size:calc(var(--cs)*.56); line-height:1; filter:drop-shadow(0 4px 3px rgba(0,0,0,.5)); }
+        .ic.pick { filter:drop-shadow(0 0 12px #22d3ee) drop-shadow(0 0 24px rgba(34,211,238,.7)); }
+        .ic.pick::after { content:''; position:absolute; inset:-8%; border:2px solid #22d3ee; border-radius:20%; animation: ringp .7s ease-out infinite; }
+        @keyframes ringp { from { transform:scale(.92); opacity:1; } to { transform:scale(1.3); opacity:0; } }
+        .ic.done { filter:drop-shadow(0 0 14px #34d399); }
+        #tray { position:absolute; left:50%; bottom:calc(7vh + 16px); transform:translateX(-50%); display:grid; grid-template-columns:repeat(8,var(--ss)); grid-auto-rows:var(--ss); gap:6px; padding:10px 12px; border-radius:16px; border:1px solid rgba(56,189,248,.35); background:rgba(8,14,34,.55); backdrop-filter:blur(6px); transition: border-color .5s, box-shadow .5s; }
+        #tray .slot { border:1px dashed rgba(148,163,184,.4); border-radius:20%; }
+        #tray.restored { border-color:#34d399; box-shadow:0 0 30px rgba(52,211,153,.55); }
+        #seeker { position:absolute; left:0; top:0; width:64px; height:64px; opacity:0; z-index:25; transition: transform var(--t,.4s) cubic-bezier(.3,.8,.3,1), opacity .3s; }
+        #seeker.show { opacity:1; }
+        #seeker .ring { position:absolute; inset:0; border:3px dashed #22d3ee; border-radius:50%; box-shadow:0 0 16px #22d3ee, inset 0 0 12px rgba(34,211,238,.5); animation: xspin 3s linear infinite; }
+        #seeker i { position:absolute; left:34px; top:30px; font-size:30px; color:#fff; filter:drop-shadow(0 3px 4px #000) drop-shadow(0 0 8px #22d3ee); transform:rotate(-20deg); }
+        .burst { position:absolute; z-index:30; pointer-events:none; }
+        .burst span { position:absolute; transform:translate(-50%,-50%); white-space:nowrap; font:900 clamp(14px,3.4vw,26px) 'Orbitron',sans-serif; color:#fde047; text-shadow:0 0 14px #facc15; animation: bpop .9s ease-out forwards; }
+        .burst i { position:absolute; left:0; top:0; width:8px; height:8px; margin:-4px; border-radius:50%; background:#fde047; box-shadow:0 0 10px #facc15; animation: spark .7s ease-out forwards; }
+        @keyframes spark { from { transform:rotate(var(--a)) translateX(0); } to { transform:rotate(var(--a)) translateX(70px); opacity:0; } }
+        @keyframes bpop { 0% { opacity:0; transform:translate(-50%,-50%) scale(.4); } 25% { opacity:1; transform:translate(-50%,-90%) scale(1.15); } 100% { opacity:0; transform:translate(-50%,-170%) scale(1); } }
+        @keyframes xspin { to { transform:rotate(360deg); } }
+        #count-wrap { position:absolute; left:0; right:0; top:42%; display:flex; justify-content:center; z-index:9; }
+        #count-wrap .count-num { font-size:clamp(4.5rem,20vmin,10rem); }
+    </style>
+</head>
+<body id="body-root" class="flex flex-col items-center gap-2 p-2 md:p-4 relative overflow-hidden">
+
+    <div class="stars-container" id="stars-bg"></div>
+
+    <header class="w-full max-w-4xl z-10 shrink-0 flex flex-wrap items-center justify-between gap-2">
+        <a id="home-link" href="title-mode.html" class="px-4 py-2 bg-slate-800/80 hover:bg-slate-700/90 text-cyan-300 border border-cyan-500/40 rounded-xl text-xs font-bold font-orbitron transition flex items-center gap-2 shadow-lg">
+            <i class="fa-solid fa-house"></i>
+            <span>タイトルへ</span>
+        </a>
+
+        <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400 font-bold uppercase font-orbitron mr-1 hidden sm:inline">Difficulty:</span>
+            <button onclick="setDifficulty('easy')" id="btn-easy" class="diff-btn px-3 py-1.5 rounded-lg text-xs font-orbitron font-bold transition border border-cyan-500/30 text-slate-300 hover:text-white">EASY (2x2)</button>
+            <button onclick="setDifficulty('normal')" id="btn-normal" class="diff-btn px-3 py-1.5 rounded-lg text-xs font-orbitron font-bold transition border border-cyan-500/30 text-slate-300 hover:text-white">NORMAL (4x4)</button>
+            <button onclick="setDifficulty('hard')" id="btn-hard" class="diff-btn px-3 py-1.5 rounded-lg text-xs font-orbitron font-bold transition border border-cyan-500/30 text-slate-300 hover:text-white">HARD (6x6)</button>
+        </div>
+    </header>
+
+    <main class="w-full max-w-4xl z-10 flex flex-col items-center flex-1 min-h-0">
+        <!-- Dashboard Panel -->
+        <div class="w-full neon-panel rounded-2xl p-2 md:p-3 mb-2 shrink-0 grid grid-cols-5 gap-2 text-center items-center">
+            <!-- SCORE -->
+            <div class="flex flex-col items-center">
+                <span class="text-[10px] md:text-xs text-cyan-400 font-orbitron tracking-wider uppercase font-bold">SCORE</span>
+                <span id="score-display" class="text-base md:text-2xl font-black font-orbitron neon-text-cyan text-cyan-300">0</span>
+            </div>
+
+            <!-- COMBO -->
+            <div class="flex flex-col items-center border-l border-slate-700/60">
+                <span class="text-[10px] md:text-xs text-yellow-400 font-orbitron tracking-wider uppercase font-bold">COMBO</span>
+                <span id="combo-display" class="text-base md:text-2xl font-black font-orbitron text-yellow-300">x0</span>
+            </div>
+
+            <!-- TIMER -->
+            <div class="flex flex-col items-center border-l border-slate-700/60">
+                <span class="text-[10px] md:text-xs text-pink-400 font-orbitron tracking-wider uppercase font-bold">TIMER</span>
+                <span id="timer-display" class="text-base md:text-2xl font-black font-orbitron neon-text-pink text-pink-400">030</span>
+            </div>
+
+            <!-- MOVES -->
+            <div class="flex flex-col items-center border-l border-slate-700/60">
+                <span class="text-[10px] md:text-xs text-amber-400 font-orbitron tracking-wider uppercase font-bold">MOVES</span>
+                <span id="moves-display" class="text-base md:text-2xl font-black font-orbitron neon-text-amber text-amber-300">0</span>
+            </div>
+
+            <!-- RESET / HINT -->
+            <div class="flex flex-col gap-1 items-center justify-center border-l border-slate-700/60">
+                <button id="hint-btn" onclick="useHint()" class="w-full py-1 px-1 bg-purple-600/80 hover:bg-purple-500 text-white font-bold font-orbitron text-[10px] md:text-xs rounded-lg shadow transition active:scale-95 border border-purple-400/40 flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-eye"></i>
+                    <span id="hint-text">HINT (1)</span>
+                </button>
+                <button onclick="resetGame()" class="w-full py-1 px-1 bg-red-600/80 hover:bg-red-500 text-white font-bold font-orbitron text-[10px] md:text-xs rounded-lg shadow transition active:scale-95 border border-red-400/40 flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span>RESET</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Combo Banner Pop-up -->
+        <div id="combo-banner" class="fixed left-0 right-0 top-28 text-center pointer-events-none z-40 text-lg md:text-2xl font-black font-orbitron text-yellow-400 tracking-widest uppercase transition-opacity opacity-0" style="text-shadow:0 0 12px rgba(250,204,21,.9)">
+            FEVER MODE x2!
+        </div>
+
+        <div id="game-board-container" class="w-full">
+            <div id="game-board" class="grid gap-2 p-2 neon-panel rounded-2xl"></div>
+        </div>
+    </main>
+
+    <!-- 学園祭ハイスコア掲示板 (フッター上) -->
+    <div class="z-10 shrink-0 w-full max-w-4xl neon-panel rounded-xl p-1.5 md:p-2 flex items-center justify-between text-xs font-orbitron">
+        <span class="text-amber-400 font-bold flex items-center gap-1">
+            <i class="fa-solid fa-crown text-yellow-400"></i> HIGH SCORES:
+        </span>
+        <div id="high-scores-list" class="flex gap-4 text-slate-300 font-bold">
+            <!-- JSで上位スコアを動的更新 -->
+        </div>
+    </div>
+
+
+    <!-- INTRO CINEMATIC -->
+    <div id="intro" class="fixed inset-0 z-[60] overflow-hidden">
+        <canvas id="warp" class="absolute inset-0 w-full h-full"></canvas>
+        <div class="vignette"></div>
+        <div class="letterbox" style="top:0"></div>
+        <div class="letterbox" style="bottom:0"></div>
+
+        <button id="skip-btn" onclick="skipIntro()" class="absolute top-[8vh] right-4 z-10 items-center gap-2 px-4 py-2 rounded-lg bg-slate-900/70 hover:bg-slate-800 border border-slate-500/50 text-slate-200 text-xs font-orbitron font-bold tracking-widest transition backdrop-blur">
+            SKIP <i class="fa-solid fa-forward"></i>
+        </button>
+
+        <!-- Scene 0: Launch -->
+        <div id="scene-0" class="scene show">
+            <div class="rise text-[10px] md:text-xs font-orbitron tracking-[.4em] text-cyan-300/80 mb-4" style="--d:.1s">FESTIVAL EDITION 2026</div>
+            <div class="rise emblem mb-2" style="--d:.2s">🚀</div>
+            <h1 class="rise font-orbitron font-black title-grad text-3xl md:text-6xl tracking-wider leading-tight" style="--d:.3s">SPACE SHOOTER</h1>
+            <div class="rise font-orbitron text-slate-300 tracking-[.5em] text-sm md:text-lg my-1" style="--d:.4s">×</div>
+            <h2 class="rise font-orbitron font-extrabold text-white text-2xl md:text-5xl tracking-widest mb-8" style="--d:.5s">CARD MATCHING</h2>
+            <button id="play-btn" onclick="startIntro()" class="rise play-btn px-10 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-orbitron font-black tracking-[.3em] text-base md:text-lg border border-cyan-300/60" style="--d:.7s">
+                <i class="fa-solid fa-play mr-2"></i>PLAY
+            </button>
+            <div class="rise mt-4 text-[10px] text-slate-400 font-orbitron tracking-widest" style="--d:.9s">PRESS ENTER / クリックでスタート</div>
+        </div>
+
+        <!-- Intro stage: scattered cards -> player matches pairs -> order restored -->
+        <div id="play-stage">
+            <div id="cap">
+                <div id="cap-t" class="title-grad"></div>
+                <div id="cap-s"></div>
+                <div id="cap-j"></div>
+                <div id="intro-count"></div>
+                <div id="intro-rules"></div>
+            </div>
+            <div id="cardfield"></div>
+            <div id="tray"></div>
+            <div id="seeker"><span class="ring"></span><i class="fa-solid fa-hand-pointer"></i></div>
+            <div id="count-wrap"><div id="count-num" class="count-num font-orbitron font-black title-grad"></div></div>
+        </div>
+
+        <div id="intro-progress"></div>
+    </div>
+
+    <!-- CLEAR MODAL -->
+    <div id="clear-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md hidden p-4">
+        <div class="neon-panel rounded-3xl p-6 md:p-8 max-w-md w-full text-center space-y-5 border-2 border-cyan-400 shadow-[0_0_50px_rgba(56,189,248,0.4)]">
+            <div class="text-5xl text-amber-400 animate-bounce">
+                <i class="fa-solid fa-trophy drop-shadow-[0_0_20px_rgba(251,191,36,0.8)]"></i>
+            </div>
+            <h2 class="text-2xl md:text-3xl font-black font-orbitron neon-text-cyan text-cyan-300 uppercase tracking-wider">
+                MISSION CLEAR!
+            </h2>
+            
+            <div class="bg-slate-900/80 rounded-2xl p-4 space-y-2 border border-slate-700 text-sm">
+                <div class="flex justify-between items-center text-slate-300">
+                    <span>基本スコア:</span>
+                    <span id="modal-base-score" class="font-bold font-orbitron text-cyan-300">0</span>
+                </div>
+                <div class="flex justify-between items-center text-slate-300">
+                    <span>タイムボーナス:</span>
+                    <span id="modal-time-bonus" class="font-bold font-orbitron text-amber-300">+0</span>
+                </div>
+                <div class="flex justify-between items-center text-slate-300">
+                    <span>最大コンボ:</span>
+                    <span id="modal-max-combo" class="font-bold font-orbitron text-yellow-300">x0</span>
+                </div>
+                <div class="flex justify-between items-center text-slate-300">
+                    <span>総移動回数 (Moves):</span>
+                    <span id="modal-moves" class="font-bold font-orbitron text-purple-300">0</span>
+                </div>
+                <hr class="border-slate-800 my-1">
+                <div class="flex justify-between items-center text-base font-extrabold text-white">
+                    <span>最終スコア:</span>
+                    <span id="modal-final-score" class="text-xl font-orbitron text-amber-400 neon-text-amber">0</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2.5">
+                <button id="next-level-btn" onclick="nextLevel()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black font-orbitron rounded-xl shadow-lg transition active:scale-95 text-xs md:text-sm uppercase tracking-wider flex items-center justify-center gap-2">
+                    <span>次のレベルへ</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+                <div class="flex gap-2.5">
+                    <button onclick="resetGame()" class="flex-1 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold font-orbitron rounded-xl shadow-lg transition active:scale-95 text-xs">
+                        もう一度あそぶ
+                    </button>
+                    <a href="title-mode.html" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold font-orbitron rounded-xl border border-slate-600 transition flex items-center justify-center text-xs">
+                        タイトルへ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME OVER MODAL -->
+    <div id="gameover-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md hidden p-4">
+        <div class="neon-panel rounded-3xl p-6 md:p-8 max-w-md w-full text-center space-y-5 border-2 border-red-500 shadow-[0_0_50px_rgba(239,68,68,0.4)]">
+            <div class="text-5xl text-red-500 animate-pulse">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h2 class="text-2xl md:text-3xl font-black font-orbitron text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.8)] uppercase tracking-wider">
+                TIME UP - GAME OVER
+            </h2>
+            <p class="text-xs text-slate-300">制限時間内に全てのカードを揃えることができませんでした。</p>
+
+            <div class="flex gap-3 pt-2">
+                <button onclick="resetGame()" class="flex-1 py-3 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-500 hover:to-pink-500 text-white font-bold font-orbitron rounded-xl shadow-lg transition active:scale-95 text-xs md:text-sm">
+                    RETRY
+                </button>
+                <a href="title-mode.html" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold font-orbitron rounded-xl border border-slate-600 transition flex items-center justify-center text-xs md:text-sm">
+                    タイトルへ
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Web Audio API による即時効果音（ファイル読み込み不要）
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+            if (type === 'flip') {
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now); osc.stop(now + 0.08);
+            } else if (type === 'match') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(659.25, now + 0.08);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now); osc.stop(now + 0.25);
+            } else if (type === 'combo') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(587.33, now);
+                osc.frequency.setValueAtTime(880, now + 0.1);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } else if (type === 'bomb') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } else if (type === 'over') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.5);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+                osc.start(now); osc.stop(now + 0.5);
+            }
+        }
+
+        const ICON_POOL = [
+            { icon: '🚀' }, { icon: '🪐' }, { icon: '🛸' }, { icon: '👽' },
+            { icon: '🌙' }, { icon: '⭐' }, { icon: '🌍' }, { icon: '☄️' },
+            { icon: '🌞' }, { icon: '🛰️' }, { icon: '👨‍🚀' }, { icon: '💎' },
+            { icon: '⚡' }, { icon: '🧭' }, { icon: '🔭' }, { icon: '🛡️' },
+            { icon: '🎯' }, { icon: '🔥' }
+        ];
+
+        // 難易度ごとにヒント回数 (hints) を設定
+        const DIFFICULTY_SETTINGS = {
+            easy: { grid: 2, pairs: 2, time: 30, hints: 1, fontScale: 'text-4xl md:text-6xl', hasBomb: false, next: 'normal' },
+            normal: { grid: 4, pairs: 8, time: 60, hints: 3, fontScale: 'text-2xl md:text-4xl', hasBomb: false, next: 'hard' },
+            hard: { grid: 6, pairs: 17, time: 120, hints: 5, fontScale: 'text-lg md:text-2xl', hasBomb: true, next: null }
+        };
+
+        let currentDifficulty = 'easy';
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let score = 0;
+        let moves = 0;
+        let combo = 0;
+        let maxCombo = 0;
+        let remainingHints = 1;
+        let timer = 0;
+        let timerInterval = null;
+        let isBoardLocked = false;
+        let isGameStarted = false;
+
+        function createStars() {
+            const container = document.getElementById('stars-bg');
+            container.innerHTML = '';
+            for (let i = 0; i < 70; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 2.5 + 1;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.animationDuration = `${Math.random() * 3 + 1.5}s`;
+                star.style.animationDelay = `${Math.random() * 2}s`;
+                container.appendChild(star);
+            }
+        }
+
+        function setDifficulty(diff) {
+            currentDifficulty = diff;
+            document.querySelectorAll('.diff-btn').forEach(btn => {
+                btn.classList.remove('bg-cyan-500', 'text-black', 'shadow-lg', 'shadow-cyan-500/30');
+                btn.classList.add('text-slate-300');
+            });
+            const activeBtn = document.getElementById(`btn-${diff}`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-cyan-500', 'text-black', 'shadow-lg', 'shadow-cyan-500/30');
+                activeBtn.classList.remove('text-slate-300');
+            }
+            resetGame();
+        }
+
+        function nextLevel() {
+            const nextDiff = DIFFICULTY_SETTINGS[currentDifficulty].next;
+            setDifficulty(nextDiff ? nextDiff : 'easy');
+        }
+
+        function resetGame() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+
+            const setting = DIFFICULTY_SETTINGS[currentDifficulty];
+            score = 0;
+            moves = 0;
+            combo = 0;
+            maxCombo = 0;
+            matchedPairs = 0;
+            remainingHints = setting.hints; // 難易度別のヒント回数を初期化
+            timer = setting.time;
+            flippedCards = [];
+            isBoardLocked = false;
+            isGameStarted = false;
+
+            updateHintButton();
+            updateHUD();
+            document.getElementById('clear-modal').classList.add('hidden');
+            document.getElementById('gameover-modal').classList.add('hidden');
+
+            generateBoard(setting);
+            renderHighScores();
+        }
+
+        function updateHintButton() {
+            const hintBtn = document.getElementById('hint-btn');
+            document.getElementById('hint-text').textContent = `HINT (${remainingHints})`;
+
+            if (remainingHints <= 0) {
+                hintBtn.disabled = true;
+                hintBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                hintBtn.disabled = false;
+                hintBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function updateHUD() {
+            document.getElementById('score-display').textContent = score;
+            document.getElementById('timer-display').textContent = String(timer).padStart(3, '0');
+            document.getElementById('moves-display').textContent = moves;
+            document.getElementById('combo-display').textContent = `x${combo}`;
+        }
+
+        function generateBoard(setting) {
+            const board = document.getElementById('game-board');
+            board.innerHTML = '';
+            board.className = `grid gap-1.5 md:gap-2.5 p-2 neon-panel rounded-2xl grid-${setting.grid}x${setting.grid}`;
+
+            let selectedIcons = ICON_POOL.slice(0, setting.pairs);
+            let deck = [...selectedIcons, ...selectedIcons];
+
+            // 爆弾カード追加（Hardモード用）
+            if (setting.hasBomb) {
+                deck.push({ icon: '💣', isBomb: true });
+                deck.push({ icon: '💣', isBomb: true });
+            }
+
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+
+            cards = deck.map((item, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = `card-container w-full h-full ${item.isBomb ? 'bomb' : ''}`;
+                cardEl.dataset.id = index;
+                cardEl.dataset.icon = item.icon;
+                if (item.isBomb) cardEl.dataset.isBomb = "true";
+
+                cardEl.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-back">
+                            <i class="fa-solid fa-atom back-logo"></i>
+                        </div>
+                        <div class="card-front">
+                            <span class="logo3d">${item.icon}</span>
+                        </div>
+                    </div>
+                `;
+
+                cardEl.addEventListener('click', () => handleCardClick(cardEl));
+                board.appendChild(cardEl);
+                return cardEl;
+            });
+        }
+
+        function useHint() {
+            if (remainingHints <= 0 || isBoardLocked) return;
+            remainingHints--;
+            updateHintButton();
+
+            cards.forEach(card => {
+                if (!card.classList.contains('matched') && !card.classList.contains('flipped')) {
+                    card.classList.add('hinted');
+                }
+            });
+
+            setTimeout(() => {
+                cards.forEach(card => card.classList.remove('hinted'));
+            }, 1200);
+        }
+
+        function startTimer() {
+            if (isGameStarted) return;
+            isGameStarted = true;
+
+            timerInterval = setInterval(() => {
+                timer--;
+                document.getElementById('timer-display').textContent = String(timer).padStart(3, '0');
+                if (timer <= 0) {
+                    clearInterval(timerInterval);
+                    playSound('over');
+                    handleGameOver();
+                }
+            }, 1000);
+        }
+
+        function handleCardClick(cardEl) {
+            if (isBoardLocked) return;
+            if (cardEl.classList.contains('flipped') || cardEl.classList.contains('matched')) return;
+
+            if (!isGameStarted) startTimer();
+
+            playSound('flip');
+            cardEl.classList.add('flipped');
+
+            // 爆弾処理
+            if (cardEl.dataset.isBomb === "true") {
+                playSound('bomb');
+                triggerShake();
+                timer = Math.max(0, timer - 5);
+                updateHUD();
+                setTimeout(() => {
+                    cardEl.classList.remove('flipped');
+                }, 800);
+                return;
+            }
+
+            flippedCards.push(cardEl);
+
+            if (flippedCards.length === 2) {
+                moves++;
+                updateHUD();
+                checkPairMatch();
+            }
+        }
+
+        function triggerShake() {
+            const body = document.getElementById('body-root');
+            body.classList.add('shake');
+            setTimeout(() => body.classList.remove('shake'), 300);
+        }
+
+        function triggerComboBanner(multiplier) {
+            const banner = document.getElementById('combo-banner');
+            banner.textContent = `🔥 FEVER COMBO x${multiplier}! 🔥`;
+            banner.classList.remove('opacity-0');
+            setTimeout(() => banner.classList.add('opacity-0'), 1000);
+        }
+
+        function checkPairMatch() {
+            isBoardLocked = true;
+            const [card1, card2] = flippedCards;
+            const isMatch = card1.dataset.icon === card2.dataset.icon;
+
+            if (isMatch) {
+                combo++;
+                if (combo > maxCombo) maxCombo = combo;
+
+                if (combo > 1) {
+                    playSound('combo');
+                    triggerComboBanner(combo);
+                } else {
+                    playSound('match');
+                }
+
+                setTimeout(() => {
+                    card1.classList.add('matched');
+                    card2.classList.add('matched');
+                    flippedCards = [];
+                    isBoardLocked = false;
+
+                    score += 100 * combo;
+                    matchedPairs++;
+                    updateHUD();
+
+                    if (matchedPairs === DIFFICULTY_SETTINGS[currentDifficulty].pairs) {
+                        handleGameClear();
+                    }
+                }, 300);
+            } else {
+                combo = 0; // コンボリセット
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    flippedCards = [];
+                    isBoardLocked = false;
+
+                    score = Math.max(0, score - 10);
+                    updateHUD();
+                }, 800);
+            }
+        }
+
+        function saveHighScore(finalScore) {
+            let key = `matching_hs_${currentDifficulty}`;
+            let scores = [];
+            try { scores = JSON.parse(localStorage.getItem(key) || "[]"); } catch (e) {}
+            scores.push(finalScore);
+            scores.sort((a, b) => b - a);
+            scores = scores.slice(0, 3);
+            try { localStorage.setItem(key, JSON.stringify(scores)); } catch (e) {}
+            renderHighScores();
+        }
+
+        function renderHighScores() {
+            let key = `matching_hs_${currentDifficulty}`;
+            let scores = [];
+            try { scores = JSON.parse(localStorage.getItem(key) || "[]"); } catch (e) {}
+            const container = document.getElementById('high-scores-list');
+            if (scores.length === 0) {
+                container.innerHTML = `<span class="text-slate-500">NO RECORDS YET</span>`;
+            } else {
+                container.innerHTML = scores.map((s, i) => `<span>#${i+1}: <span class="text-cyan-300">${s}</span></span>`).join('');
+            }
+        }
+
+        function handleGameClear() {
+            clearInterval(timerInterval);
+
+            const timeBonus = timer * 10;
+            const finalScore = score + timeBonus;
+
+            saveHighScore(finalScore);
+
+            document.getElementById('modal-base-score').textContent = score;
+            document.getElementById('modal-time-bonus').textContent = `+${timeBonus}`;
+            document.getElementById('modal-max-combo').textContent = `x${maxCombo}`;
+            document.getElementById('modal-moves').textContent = moves;
+            document.getElementById('modal-final-score').textContent = finalScore;
+
+            const nextBtn = document.getElementById('next-level-btn');
+            const nextDiff = DIFFICULTY_SETTINGS[currentDifficulty].next;
+
+            if (nextDiff === 'normal') {
+                nextBtn.innerHTML = `<span>NORMAL (4x4) へ挑戦</span> <i class="fa-solid fa-arrow-right"></i>`;
+            } else if (nextDiff === 'hard') {
+                nextBtn.innerHTML = `<span>HARD (6x6) へ挑戦</span> <i class="fa-solid fa-arrow-right"></i>`;
+            } else {
+                nextBtn.innerHTML = `<span>最初 (EASY) から遊ぶ</span> <i class="fa-solid fa-rotate-left"></i>`;
+            }
+
+            document.getElementById('clear-modal').classList.remove('hidden');
+
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+            }
+        }
+
+        function handleGameOver() {
+            isBoardLocked = true;
+            document.getElementById('gameover-modal').classList.remove('hidden');
+        }
+
+        // ===== INTRO CINEMATIC (~12s, skippable) =====
+        const INTRO_MS = 12300;
+        let introTimers = [], introActive = false, warpRAF = null, warpSpeed = 2, warpTarget = 2;
+
+        function introSound(type) {
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const o = audioCtx.createOscillator(), g = audioCtx.createGain(), t = audioCtx.currentTime;
+                o.connect(g); g.connect(audioCtx.destination);
+                if (type === 'whoosh') { o.type='sawtooth'; o.frequency.setValueAtTime(60,t); o.frequency.exponentialRampToValueAtTime(700,t+.9); g.gain.setValueAtTime(.001,t); g.gain.linearRampToValueAtTime(.12,t+.4); g.gain.linearRampToValueAtTime(.001,t+.9); o.start(t); o.stop(t+.9); }
+                else if (type === 'tick') { o.type='sine'; o.frequency.setValueAtTime(660,t); g.gain.setValueAtTime(.2,t); g.gain.exponentialRampToValueAtTime(.001,t+.25); o.start(t); o.stop(t+.25); }
+                else if (type === 'blip') { o.type='square'; o.frequency.setValueAtTime(900,t); g.gain.setValueAtTime(.06,t); g.gain.exponentialRampToValueAtTime(.001,t+.09); o.start(t); o.stop(t+.09); }
+                else if (type === 'chime') { o.type='triangle'; o.frequency.setValueAtTime(784,t); o.frequency.setValueAtTime(1175,t+.09); g.gain.setValueAtTime(.2,t); g.gain.exponentialRampToValueAtTime(.001,t+.35); o.start(t); o.stop(t+.35); }
+                else if (type === 'collect') { o.type='sine'; o.frequency.setValueAtTime(400,t); o.frequency.exponentialRampToValueAtTime(900,t+.2); g.gain.setValueAtTime(.12,t); g.gain.exponentialRampToValueAtTime(.001,t+.25); o.start(t); o.stop(t+.25); }
+                else if (type === 'go') { o.type='triangle'; o.frequency.setValueAtTime(523,t); o.frequency.setValueAtTime(784,t+.1); o.frequency.setValueAtTime(1047,t+.2); g.gain.setValueAtTime(.25,t); g.gain.exponentialRampToValueAtTime(.001,t+.6); o.start(t); o.stop(t+.6); }
+            } catch (e) {}
+        }
+
+        // Warp-speed starfield
+        function startWarp() {
+            const cv = document.getElementById('warp'), ctx = cv.getContext('2d');
+            const resize = () => { cv.width = innerWidth; cv.height = innerHeight; };
+            resize(); window.onresize = resize;
+            const stars = Array.from({ length: 220 }, () => ({ x: (Math.random()-.5)*2, y: (Math.random()-.5)*2, z: Math.random()*1.5+.1, px: null, py: null }));
+            (function loop() {
+                warpSpeed += (warpTarget - warpSpeed) * 0.04;
+                ctx.fillStyle = 'rgba(3,5,13,0.35)'; ctx.fillRect(0, 0, cv.width, cv.height);
+                const cx = cv.width/2, cy = cv.height/2, k = Math.max(cv.width, cv.height) * 0.6;
+                for (const st of stars) {
+                    st.z -= warpSpeed * 0.0035;
+                    if (st.z <= 0.02) { st.x=(Math.random()-.5)*2; st.y=(Math.random()-.5)*2; st.z=1.5; st.px=null; }
+                    const sx = cx + st.x / st.z * k * 0.5, sy = cy + st.y / st.z * k * 0.5;
+                    const a = Math.min(1, (1.5 - st.z) * 1.2);
+                    ctx.strokeStyle = `rgba(190,230,255,${a})`; ctx.lineWidth = Math.max(.6, (1.5 - st.z) * 1.8);
+                    ctx.beginPath(); ctx.moveTo(st.px ?? sx, st.py ?? sy); ctx.lineTo(sx, sy); ctx.stroke();
+                    st.px = sx; st.py = sy;
+                }
+                warpRAF = requestAnimationFrame(loop);
+            })();
+        }
+        function stopWarp() { cancelAnimationFrame(warpRAF); warpRAF = null; }
+
+        function showScene(n) {
+            document.querySelectorAll('#intro .scene').forEach((el, i) => el.classList.toggle('show', i === n));
+        }
+        function at(ms, fn) { introTimers.push(setTimeout(fn, ms)); }
+        const $i = (id) => document.getElementById(id);
+        const rnd = (a, b) => a + Math.random() * (b - a);
+
+        // ---- scattered-card story helpers ----
+        const INTRO_ICONS = ['🚀', '🪐', '🛸', '👽', '🌙', '⭐', '🌍', '☄️'];
+        const ic = { cards: [], cs: 80, ss: 40, collected: 0 };
+
+        function icPlace(c, x, y, r, s, t) {
+            c.x = x; c.y = y;
+            c.el.style.setProperty('--t', t + 's');
+            c.el.style.transform = `translate(${x - ic.cs / 2}px, ${y - ic.cs / 2}px) rotate(${r}deg) scale(${s})`;
+        }
+        function icSeek(x, y, t) {
+            const s = $i('seeker');
+            s.style.setProperty('--t', t + 's');
+            s.style.transform = `translate(${x - 32}px, ${y - 32}px)`;
+        }
+        function icSlot(i) {
+            const r = $i('tray').children[i].getBoundingClientRect();
+            return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        }
+        function icCap(t, s, j) {
+            $i('cap-t').textContent = t; $i('cap-s').textContent = s; $i('cap-j').textContent = j;
+            const box = $i('cap'); box.classList.remove('cap-anim'); void box.offsetWidth; box.classList.add('cap-anim');
+        }
+        function icBurst(x, y) {
+            const b = document.createElement('div');
+            b.className = 'burst'; b.style.left = x + 'px'; b.style.top = y + 'px';
+            b.innerHTML = '<span>MATCH!</span>' + Array.from({ length: 10 }, (_, i) => `<i style="--a:${i * 36}deg"></i>`).join('');
+            $i('cardfield').appendChild(b);
+            setTimeout(() => b.remove(), 1000);
+        }
+
+        // 16 cards (8 pairs) burst out of the centre and tumble around the screen
+        function icBuild() {
+            const W = innerWidth, H = innerHeight;
+            ic.cs = Math.round(Math.max(54, Math.min(104, Math.min(W, H) * 0.14)));
+            ic.ss = Math.round(Math.max(28, Math.min(54, (W - 70) / 9.2)));
+            ic.collected = 0;
+            const root = $i('intro');
+            root.style.setProperty('--cs', ic.cs + 'px'); root.style.setProperty('--ss', ic.ss + 'px');
+            const tray = $i('tray'); tray.className = ''; tray.innerHTML = '<i class="slot"></i>'.repeat(16);
+            const field = $i('cardfield'); field.innerHTML = '';
+            $i('seeker').classList.remove('show');
+            ic.cards = [];
+            INTRO_ICONS.forEach((icon, p) => [0, 1].forEach(() => {
+                const el = document.createElement('div');
+                el.className = 'ic';
+                el.style.zIndex = 1 + Math.floor(Math.random() * 10);
+                el.innerHTML = `<div class="ic-in" style="animation-duration:${rnd(2.4, 4.4).toFixed(2)}s;animation-delay:-${rnd(0, 3).toFixed(2)}s"><div class="flipper"><div class="f"><span class="ilogo">${icon}</span></div><div class="b"><i class="fa-solid fa-atom"></i></div></div></div>`;
+                field.appendChild(el);
+                const c = { el, p, x: W / 2, y: H / 2 };
+                icPlace(c, W / 2, H * 0.5, 0, 0, 0);
+                ic.cards.push(c);
+            }));
+            void field.offsetWidth;
+            const capBottom = $i('cap').getBoundingClientRect().bottom;
+            const yMin = capBottom + ic.cs * 0.55;
+            const yMax = Math.max(yMin + 40, tray.getBoundingClientRect().top - ic.cs * 0.6);
+            [...ic.cards].sort(() => Math.random() - 0.5).forEach((c, i) =>
+                at(120 + i * 55, () => icPlace(c, rnd(ic.cs * 0.7, W - ic.cs * 0.7), rnd(yMin, yMax), rnd(-70, 70), rnd(0.8, 1.25), 1.1)));
+        }
+
+        // The player's cursor finds a card, finds its twin, they merge and are collected
+        function icMatch(p, f) {
+            const [A, B] = ic.cards.filter((c) => c.p === p);
+            let mx = 0, my = 0;
+            icSeek(A.x, A.y, 0.38 * f);
+            at(400 * f, () => { A.el.classList.add('pick'); introSound('blip'); icSeek(B.x, B.y, 0.38 * f); });
+            at(800 * f, () => {
+                B.el.classList.add('pick'); introSound('blip');
+                mx = (A.x + B.x) / 2; my = (A.y + B.y) / 2;
+                const off = ic.cs * 0.58;
+                A.el.style.zIndex = B.el.style.zIndex = 20;
+                icPlace(A, mx - off, my, -6, 1.15, 0.35 * f);
+                icPlace(B, mx + off, my, 6, 1.15, 0.35 * f);
+            });
+            at(1200 * f, () => {
+                icBurst(mx, my); introSound('chime');
+                [A, B].forEach((c) => { c.el.classList.remove('pick'); c.el.classList.add('done'); });
+            });
+            at(1500 * f, () => {
+                [A, B].forEach((c, k) => {
+                    const s = icSlot(k * 8 + p);
+                    c.el.classList.add('settled');
+                    icPlace(c, s.x, s.y, 0, ic.ss / ic.cs, 0.65);
+                });
+                introSound('collect');
+                ic.collected++;
+                $i('intro-count').textContent = `${ic.collected} / 8`;
+            });
+        }
+
+        function startIntro() {
+            if (introActive) return;
+            introActive = true;
+            const cfg = DIFFICULTY_SETTINGS[currentDifficulty];
+            const rules = `⏱ ${cfg.time}s  ·  🔥 COMBO = BONUS` + (cfg.hasBomb ? '  ·  💣 BOMB = -5s' : '');
+            const intro = $i('intro');
+            intro.classList.add('playing');
+            if (!warpRAF) startWarp();
+            warpTarget = 4; introSound('whoosh');
+            showScene(-1);
+
+            $i('intro-count').textContent = ''; $i('intro-rules').textContent = '';
+            icCap('SIGNAL LOST', 'The star-cards have been scattered across space…', '星のカードが宇宙に散らばってしまった…');
+            icBuild();                                              // 0.0s  cards scatter in a mess
+
+            at(2900, () => { icSeek(innerWidth / 2, innerHeight * 0.5, 0); $i('seeker').classList.add('show'); });
+            at(3000, () => {                                        // 3.0s  player starts searching
+                icCap('FIND THE PAIRS', 'Spot two identical cards.', '同じカードを見つけよう');
+                $i('intro-count').textContent = '0 / 8'; introSound('whoosh');
+            });
+            [3200, 4200, 5200].forEach((ms, k) => at(ms, () => icMatch(k, 1)));            // slow, readable matches
+            at(5900, () => icCap('COLLECT THEM ALL', 'Match every pair to bring order back.', 'ペアを揃えて全部集めよう'));
+            [3, 4, 5, 6, 7].forEach((p, k) => at(6000 + k * 420, () => icMatch(p, 0.5)));  // faster chain
+            at(8600, () => $i('seeker').classList.remove('show'));
+
+            at(9150, () => {                                        // 9.15s order restored
+                ic.cards.forEach((c) => c.el.classList.add('flipcard'));
+                $i('tray').classList.add('restored'); introSound('chime');
+                icCap('ORDER RESTORED', 'All star-cards recovered. Time to play!', '秩序が戻った — ゲーム開始！');
+                $i('intro-count').textContent = '8 / 8'; $i('intro-rules').textContent = rules;
+                warpTarget = 12;
+            });
+            const num = $i('count-num');
+            [['3', 9500], ['2', 10250], ['1', 11000], ['GO!', 11750]].forEach(([tx, ms]) => at(ms, () => {
+                num.style.animation = 'none'; void num.offsetWidth; num.style.animation = '';
+                num.textContent = tx; introSound(tx === 'GO!' ? 'go' : 'tick');
+                if (tx === 'GO!') warpTarget = 45;
+            }));
+            at(INTRO_MS, endIntro);
+        }
+
+        function skipIntro() { if (introActive) endIntro(); }
+
+        function endIntro() {
+            if (!introActive) return;
+            introActive = false;
+            introTimers.forEach(clearTimeout); introTimers = [];
+            const intro = document.getElementById('intro');
+            intro.classList.add('out');
+            resetGame();                                    // fresh shuffled board
+            const board = document.getElementById('game-board');
+            [...board.children].forEach((c, i) => c.style.setProperty('--i', i));
+            board.classList.add('dealing');
+            setTimeout(() => board.classList.remove('dealing'), 1800);
+            setTimeout(() => { intro.style.display = 'none'; stopWarp(); $i('cardfield').innerHTML = ''; }, 650);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !introActive && document.getElementById('intro').style.display !== 'none' && !document.getElementById('intro').classList.contains('out')) startIntro();
+            if (e.key === 'Escape') skipIntro();
+        });
+
+        window.onload = function() {
+            createStars();
+            setDifficulty('easy');
+            startWarp();   // ambient starfield behind the launch screen
+            if (EMBEDDED) { document.documentElement.classList.add('embedded'); startIntro(); } // title page already had the PLAY click
+        };
+
+        // Inside title-mode.html: "title" links close the game frame instead of navigating
+        const EMBEDDED = window.self !== window.top;
+        document.addEventListener('click', (e) => {
+            const a = e.target.closest('a[href="title-mode.html"]');
+            if (a && EMBEDDED) { e.preventDefault(); try { window.parent.exitGame(); } catch (err) { window.top.location.reload(); } }
+        });
+    </script>
+</body>
+</html>
