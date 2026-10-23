@@ -1,0 +1,89 @@
+/* ================= embedded game ================= */
+.game-frame { position: fixed; inset: 0; z-index: 60; background: #03050d; }
+.game-frame[hidden] { display: none; }
+.game-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #03050d; }
+.game-exit { position: fixed; z-index: 2; top: max(10px, env(safe-area-inset-top)); left: 10px; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 20px 0 14px; border-radius: 999px;
+  border: 1.5px solid rgba(255, 255, 255, .3); background: rgba(8, 12, 26, .85); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  font-size: 15px; font-weight: 600; letter-spacing: .06em; color: #fff; transition: transform .3s var(--ease), border-color .3s, background .3s; }
+.game-exit svg { width: 20px; height: 20px; stroke-width: 2.2; }
+.game-exit:hover { border-color: var(--cyan); background: rgba(95, 212, 255, .18); }
+.game-exit:active { transform: scale(.96); }
+
+/* ================= 12-second story intro ================= */
+.intro { position: fixed; inset: 0; z-index: 70; background: radial-gradient(ellipse at 50% 30%, #12214a 0%, #060a1c 60%, #02030a 100%); overflow: hidden; color: #fff; font-family: "Sora", "Inter", "Noto Sans JP", "Noto Sans Myanmar", sans-serif; }
+.intro[hidden] { display: none; }
+.intro canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.intro .sc { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity .5s; display: grid; place-items: center; }
+.intro .sc.on { opacity: 1; visibility: visible; }
+.intro svg { fill: none; stroke: none; }
+.intro .cap { position: absolute; left: 0; right: 0; bottom: max(86px, 14vh); text-align: center; padding: 0 24px; font-size: clamp(1.05rem, 4.2vw, 1.6rem); font-weight: 600; letter-spacing: .06em; text-shadow: 0 0 22px rgba(95, 212, 255, .55); min-height: 2em; }
+.intro .cap.in { animation: capIn .6s var(--ease) both; }
+@keyframes capIn { from { opacity: 0; transform: translateY(12px); filter: blur(6px); } }
+.intro .prog { position: absolute; left: 24px; right: 24px; bottom: max(44px, 7vh); height: 3px; border-radius: 3px; background: rgba(255, 255, 255, .12); overflow: hidden; }
+.intro .prog i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--cyan), var(--violet)); box-shadow: 0 0 12px var(--cyan); }
+.intro.run .prog i { animation: fill12 12s linear forwards; }
+@keyframes fill12 { to { width: 100%; } }
+.intro .skip { position: absolute; z-index: 3; right: 14px; top: max(12px, env(safe-area-inset-top)); display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .3); background: rgba(8, 12, 26, .6); font-size: 13px; font-weight: 600; letter-spacing: .1em; color: #fff; }
+.intro .skip svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.intro .skip:hover { border-color: var(--cyan); background: rgba(95, 212, 255, .18); }
+.iflash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+.iflash.go { animation: iflash .7s ease-out; }
+@keyframes iflash { 0% { opacity: .95; } 100% { opacity: 0; } }
+
+/* scene 1: suit up */
+.sc1 { align-content: center; gap: 22px; }
+.sc1 .astro { width: min(46vw, 230px, 34vh); filter: drop-shadow(0 0 26px rgba(95, 212, 255, .35)); transform: translateY(40px) scale(.9); opacity: 0; }
+.sc1.on .astro { animation: astroIn 1.1s var(--ease) .2s forwards, bob2 3s ease-in-out 1.3s infinite; }
+@keyframes astroIn { to { transform: none; opacity: 1; } }
+@keyframes bob2 { 50% { transform: translateY(-6px); } }
+.sc1 .visor { transform: translateY(-70px); }
+.sc1.on .visor { animation: visorDown 1s var(--ease) 2.2s forwards; }
+@keyframes visorDown { to { transform: none; } }
+.sc1 .glint { opacity: 0; }
+.sc1.on .glint { animation: fadeIn .4s ease 3.1s forwards; }
+@keyframes fadeIn { to { opacity: .6; } }
+.sc1 .led { animation: blink .8s steps(2) infinite; }
+.sc1 .led.d2 { animation-delay: .27s; } .sc1 .led.d3 { animation-delay: .54s; }
+@keyframes blink { 50% { opacity: .2; } }
+.sc1 .arm.l { transform-origin: 45px 140px; } .sc1 .arm.r { transform-origin: 155px 140px; }
+.sc1.on .arm.l { animation: armL 1.4s ease-in-out 1s 1 both; } .sc1.on .arm.r { animation: armR 1.4s ease-in-out 1s 1 both; }
+@keyframes armL { 40% { transform: rotate(-28deg); } 100% { transform: none; } }
+@keyframes armR { 40% { transform: rotate(28deg); } 100% { transform: none; } }
+.syncbar { width: min(70vw, 300px); font-size: 11px; letter-spacing: .22em; color: #9fb0d6; display: grid; gap: 8px; text-align: center; }
+.syncbar .track { height: 6px; border-radius: 6px; background: rgba(255, 255, 255, .12); overflow: hidden; }
+.syncbar i { display: block; height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg, var(--cyan), #7dffb2); box-shadow: 0 0 12px var(--cyan); }
+.sc1.on .syncbar i { animation: fill12 3.4s ease-out .3s forwards; }
+
+/* scene 2: spacecraft check */
+.sc2 .ship { width: min(34vw, 170px, 26vh); filter: drop-shadow(0 0 24px rgba(95, 212, 255, .4)); transform: translateY(30px); opacity: 0; }
+.sc2.on .ship { animation: astroIn 1s var(--ease) .2s forwards, bob2 2.4s ease-in-out 1.2s infinite; }
+.ship .flame { fill: #48cfff; transform-origin: 0 14px; transform: scaleY(.25); }
+.sc2.on .flame { animation: flameUp 3.2s ease-in .6s forwards, flick .12s steps(2) infinite; }
+@keyframes flameUp { to { transform: scaleY(1); } }
+@keyframes flick { 50% { opacity: .75; } }
+.sc2 .door { position: absolute; top: 0; bottom: 0; width: 50%; background: repeating-linear-gradient(90deg, #0d1530 0 18px, #131d42 18px 20px); border: 0 solid rgba(95, 212, 255, .5); }
+.sc2 .door.l { left: 0; border-right-width: 2px; } .sc2 .door.r { right: 0; border-left-width: 2px; }
+.sc2.on .door.l { animation: doorL 1.2s var(--ease) 2.2s forwards; } .sc2.on .door.r { animation: doorR 1.2s var(--ease) 2.2s forwards; }
+@keyframes doorL { to { transform: translateX(-102%); } } @keyframes doorR { to { transform: translateX(102%); } }
+.sc2 .ship { position: relative; z-index: 1; margin-bottom: 18vh; }
+.sc2 .checks { z-index: 1; }
+.checks { list-style: none; position: absolute; left: 50%; top: calc(50% + 8vh); transform: translateX(-50%); display: grid; gap: 8px; width: min(78vw, 280px); }
+.checks li { display: flex; justify-content: space-between; padding: 8px 14px; border-radius: 10px; font-size: 12px; letter-spacing: .16em; background: rgba(10, 16, 38, .8); border: 1px solid rgba(255, 255, 255, .14); opacity: 0; transform: translateX(-14px); }
+.checks li b { color: #7dffb2; text-shadow: 0 0 10px #7dffb2; }
+.sc2.on .checks li { animation: chk .5s var(--ease) forwards; }
+.sc2.on .checks li:nth-child(1) { animation-delay: .8s; } .sc2.on .checks li:nth-child(2) { animation-delay: 1.4s; } .sc2.on .checks li:nth-child(3) { animation-delay: 2s; }
+@keyframes chk { to { opacity: 1; transform: none; } }
+
+/* scene 3: launch */
+.sc3 .ship { position: absolute; left: 50%; bottom: 8%; width: min(26vw, 130px, 22vh); margin-left: calc(min(26vw, 130px, 22vh) / -2); filter: drop-shadow(0 0 28px rgba(95, 212, 255, .6)); }
+.sc3.on .ship { animation: launch 3.6s cubic-bezier(.5, 0, .3, 1) forwards; }
+@keyframes launch { 0% { transform: translateY(0) scale(1); } 45% { transform: translateY(-22vh) scale(.95); } 100% { transform: translateY(-42vh) scale(.7); } }
+.sc3 .ship .flame { fill: #7be4ff; transform-origin: 0 14px; animation: flick .1s steps(2) infinite; }
+.sc3 .foe { position: absolute; width: min(12vw, 56px); opacity: 0; top: 10%; filter: drop-shadow(0 0 12px rgba(255, 88, 126, .7)); }
+.sc3 .f1 { left: 24%; } .sc3 .f2 { left: 48%; top: 6%; } .sc3 .f3 { left: 70%; }
+.sc3.on .foe { animation: foeIn .8s var(--spring) forwards; }
+.sc3.on .f1 { animation-delay: 1s; } .sc3.on .f2 { animation-delay: 1.3s; } .sc3.on .f3 { animation-delay: 1.6s; }
+@keyframes foeIn { from { opacity: 0; transform: translateY(-40px) scale(.4); } to { opacity: 1; transform: none; } }
+.sc3 .battle { position: absolute; top: 50%; left: 0; right: 0; text-align: center; font-size: clamp(2rem, 9vw, 3.6rem); font-weight: 700; letter-spacing: .08em; color: #fff; text-shadow: 0 0 30px #ff5c8a, 0 0 60px #ff5c8a; opacity: 0; transform: scale(1.6); }
+.sc3.on .battle { animation: battleIn .5s var(--ease) 2.2s forwards; }
+@keyframes battleIn { to { opacity: 1; transform: none; } }

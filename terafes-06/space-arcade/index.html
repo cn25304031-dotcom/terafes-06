@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPACE SHOOTER × CARD MATCHING</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=Inter:wght@300;400;500;600&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+Myanmar:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/title.css">
+  <link rel="stylesheet" href="css/mode-select.css">
+  <link rel="stylesheet" href="css/controls.css">
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/game-frame.css">
+</head>
+<body>
+  <!-- professional layered background -->
+  <div class="bg-mesh" aria-hidden="true"></div>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-beam" aria-hidden="true"></div>
+  <canvas id="stars" aria-hidden="true"></canvas>
+  <div class="bg-vignette" aria-hidden="true"></div>
+  <div class="bg-grain" aria-hidden="true"></div>
+  <div class="flash" id="flash" aria-hidden="true"></div>
+  <div class="corner">
+    <div class="sound-hint" id="sound-hint" data-i18n="tapHint">画面をタップするとBGMが流れます</div>
+    <div class="lang" id="lang">
+      <button class="lang-btn" id="lang-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Language">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 4 5.7 4 9s-1.4 6.3-4 9c-2.6-2.7-4-5.7-4-9s1.4-6.3 4-9z"/></svg>
+        <span id="lang-code">JA</span>
+      </button>
+      <div class="lang-menu" id="lang-menu" role="listbox" aria-label="Language" hidden></div>
+    </div>
+    <button class="sound on" id="btn-sound" aria-label="Sound" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path class="spk" d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/>
+        <path class="w1" d="M15.4 9.4a3.7 3.7 0 0 1 0 5.2"/>
+        <path class="w2" d="M18.1 6.8a7.4 7.4 0 0 1 0 10.4"/>
+        <path class="x" d="M16 9.6l5 4.8M21 9.6l-5 4.8"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- ===== 1. TITLE ===== -->
+  <main class="screen is-active" id="screen-title">
+    <header class="top reveal" style="--d:.1s">
+      <span class="mark"></span>
+      <span class="eyebrow">TERA FES 2026</span>
+    </header>
+
+    <section class="hero">
+      <h1 class="wordmark">
+        <span class="line"><span style="--d:.25s">Space Shooter</span></span>
+        <span class="times reveal" style="--d:.55s" aria-label="and"><i></i><b>×</b><i></i></span>
+        <span class="line"><span style="--d:.4s">Card Matching</span></span>
+      </h1>
+    </section>
+
+    <footer class="actions reveal" style="--d:1s">
+      <button class="btn btn-start" id="btn-start">
+        <span class="aura" aria-hidden="true"></span>
+        <span class="play-badge" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></span>
+        <span class="stack">
+          <span class="kicker">PRESS START</span>
+          <span class="label" data-i18n="start">ゲームスタート</span>
+        </span>
+        <svg class="go-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+      <button class="btn btn-help" id="btn-howto">
+        <span class="q" aria-hidden="true">?</span>
+        <span data-i18n="howto">遊び方</span>
+      </button>
+    </footer>
+  </main>
+
+  <!-- ===== 2. MODE SELECT ===== -->
+  <section class="screen" id="screen-mode">
+    <header class="top" aria-hidden="true"></header>
+
+    <section class="hero hero-sm">
+      <h2 class="heading reveal" style="--d:.15s" data-i18n="heading">ゲームを選んでください</h2>
+      <p class="sub reveal" style="--d:.25s" data-i18n="sub">遊びたいゲームをタップ</p>
+    </section>
+
+    <div class="game-list" id="game-list"><!-- rendered from GAMES in js/main.js --></div>
+
+    <div class="back-row reveal" style="--d:.7s">
+      <button class="back" id="btn-back" aria-label="戻る">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+        <span data-i18n="back">戻る</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ===== HOW TO PLAY ===== -->
+  <div class="intro" id="intro" hidden aria-live="polite">
+    <canvas id="ic"></canvas>
+    <div class="sc sc1">
+      <svg class="astro" viewBox="0 0 200 260" aria-hidden="true">
+        <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f2f6ff"/><stop offset="1" stop-color="#9fb0d6"/></linearGradient>
+        <linearGradient id="vg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5fd4ff"/><stop offset="1" stop-color="#2a3d9a"/></linearGradient>
+        <clipPath id="vc"><ellipse cx="100" cy="78" rx="38" ry="30"/></clipPath></defs>
+        <rect x="52" y="120" width="96" height="104" rx="30" fill="url(#sg)"/>
+        <rect x="30" y="128" width="30" height="84" rx="15" fill="url(#sg)" class="arm l"/>
+        <rect x="140" y="128" width="30" height="84" rx="15" fill="url(#sg)" class="arm r"/>
+        <rect x="74" y="148" width="52" height="34" rx="8" fill="#1a2447"/>
+        <circle cx="86" cy="165" r="4" fill="#5fd4ff" class="led"/><circle cx="100" cy="165" r="4" fill="#ff5c8a" class="led d2"/><circle cx="114" cy="165" r="4" fill="#7dffb2" class="led d3"/>
+        <rect x="66" y="222" width="30" height="30" rx="10" fill="#c9d3ee"/><rect x="104" y="222" width="30" height="30" rx="10" fill="#c9d3ee"/>
+        <circle cx="100" cy="76" r="52" fill="url(#sg)"/>
+        <ellipse cx="100" cy="78" rx="38" ry="30" fill="#0b1230"/>
+        <g clip-path="url(#vc)"><rect class="visor" x="60" y="46" width="80" height="64" fill="url(#vg)"/></g>
+        <ellipse cx="88" cy="68" rx="10" ry="5" fill="#fff" opacity=".5" class="glint"/>
+      </svg>
+      <div class="syncbar"><span data-i18n="suit">SUIT SYNC</span><div class="track"><i></i></div></div>
+    </div>
+    <div class="sc sc2">
+      <div class="door l"></div><div class="door r"></div>
+      <svg class="ship" viewBox="-40 -40 80 100" aria-hidden="true">
+        <path class="flame" d="M-9 14 L0 44 L9 14z"/>
+        <path d="M0 -34 L28 24 L0 13 L-28 24z" fill="#bcecff"/>
+        <path d="M0 -22 L10 13 L0 8 L-10 13z" fill="#378cff"/>
+        <rect x="-3" y="-8" width="6" height="15" fill="#fff"/>
+      </svg>
+      <ul class="checks">
+        <li><span data-i18n="chEngine">ENGINE</span><b>OK</b></li>
+        <li><span data-i18n="chWeapon">WEAPONS</span><b>OK</b></li>
+        <li><span data-i18n="chShield">SHIELD</span><b>OK</b></li>
+      </ul>
+    </div>
+    <div class="sc sc3">
+      <svg class="ship" viewBox="-40 -40 80 100" aria-hidden="true">
+        <path class="flame" d="M-9 14 L0 54 L9 14z"/>
+        <path d="M0 -34 L28 24 L0 13 L-28 24z" fill="#bcecff"/>
+        <path d="M0 -22 L10 13 L0 8 L-10 13z" fill="#378cff"/>
+        <rect x="-3" y="-8" width="6" height="15" fill="#fff"/>
+      </svg>
+      <svg class="foe f1" viewBox="-20 -22 40 44" aria-hidden="true"><path d="M0 18L-19 -8L-7 -3L0 -15L7 -3L19 -8z" fill="#ff587e"/></svg>
+      <svg class="foe f2" viewBox="-20 -22 40 44" aria-hidden="true"><path d="M0 18L-19 -8L-7 -3L0 -15L7 -3L19 -8z" fill="#ff9b55"/></svg>
+      <svg class="foe f3" viewBox="-20 -22 40 44" aria-hidden="true"><path d="M0 18L-19 -8L-7 -3L0 -15L7 -3L19 -8z" fill="#ff587e"/></svg>
+      <div class="battle" data-i18n="battle">BATTLE START</div>
+    </div>
+    <div class="cap" id="cap"></div>
+    <div class="prog"><i></i></div>
+    <button class="skip" id="skip"><span data-i18n="skip">SKIP</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l7 7-7 7M13 5l7 7-7 7"/></svg></button>
+    <div class="iflash"></div>
+  </div>
+
+  <div class="game-frame" id="game-frame" hidden>
+    <button class="game-exit" id="game-exit" aria-label="戻る">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+      <span data-i18n="back">戻る</span>
+    </button>
+    <iframe id="gf" title="Game"></iframe>
+  </div>
+
+  <div class="modal" id="howto" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="howto-title">
+      <span class="grab" aria-hidden="true"></span>
+      <h2 id="howto-title" data-i18n="howto">遊び方</h2>
+      <dl>
+        <dt>Space Shooter</dt>
+        <dd data-i18n="how1">ロケットを動かして弾を撃ち、敵を倒してスコアを稼ぐ。シールドが0になると終了。</dd>
+        <dt>Card Matching</dt>
+        <dd data-i18n="how2">カードを2枚ずつめくり、同じ絵柄のペアを探す。少ない手数と短い時間でクリアを目指そう。</dd>
+      </dl>
+      <button class="btn btn-primary" id="btn-close"><span class="label" data-i18n="close">閉じる</span></button>
+    </div>
+  </div>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/screens.js"></script>
+  <script src="js/menu.js"></script>
+  <script src="js/intro.js"></script>
+  <script src="js/interactions.js"></script>
+  <script src="js/title-letters.js"></script>
+  <script src="js/chiptune.js"></script>
+  <script src="js/attract.js"></script>
+</body>
+</html>
