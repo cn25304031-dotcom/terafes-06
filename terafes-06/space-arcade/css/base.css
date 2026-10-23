@@ -1,0 +1,62 @@
+/* ===== Main page — premium minimal + motion =====
+   Title + mode select only. Game screens are built separately.
+   NOTE: animations are intentionally NOT disabled by prefers-reduced-motion
+   (Windows "animation effects: off" turns that flag on and hid everything). */
+:root {
+  --bg: #07080d;
+  --surface: #0d0f17;
+  --line: rgba(255, 255, 255, .09);
+  --text: #f2f4fa;
+  --muted: #8a90a6;
+  --cyan: #5fd4ff;
+  --violet: #b99cff;
+  --ease: cubic-bezier(.2, .7, .2, 1);
+  --spring: cubic-bezier(.34, 1.4, .5, 1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", "Noto Sans JP", "Noto Sans Myanmar", "Myanmar Text", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ================= professional background (layered) ================= */
+body { background: #04050a; }
+.bg-mesh, .bg-grid, .bg-beam, .bg-vignette, .bg-grain { position: fixed; inset: 0; pointer-events: none; }
+/* 1. deep colour mesh */
+.bg-mesh { z-index: 0;
+  background:
+    radial-gradient(70% 55% at 50% -8%, rgba(46, 108, 255, .30), transparent 70%),
+    radial-gradient(55% 45% at 100% 105%, rgba(140, 90, 255, .24), transparent 70%),
+    radial-gradient(45% 40% at -5% 85%, rgba(20, 190, 255, .12), transparent 70%),
+    linear-gradient(180deg, #060818 0%, #04050a 60%);
+  animation: meshShift 24s ease-in-out infinite alternate; }
+@keyframes meshShift { to { filter: hue-rotate(18deg) saturate(1.15); } }
+/* 2. fine engineering grid, faded toward the edges, slowly drifting */
+.bg-grid { z-index: 0;
+  background-image:
+    linear-gradient(rgba(150, 190, 255, .07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(150, 190, 255, .07) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(ellipse 75% 62% at 50% 38%, #000 10%, transparent 72%);
+          mask-image: radial-gradient(ellipse 75% 62% at 50% 38%, #000 10%, transparent 72%);
+  animation: gridDrift 40s linear infinite; }
+@keyframes gridDrift { to { background-position: 0 64px, 64px 0; } }
+/* 3. soft light beam from above */
+.bg-beam { z-index: 0; left: 50%; right: auto; width: 70vmin; transform: translateX(-50%);
+  background: linear-gradient(180deg, rgba(120, 180, 255, .20), transparent 55%);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 50%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 50%, transparent);
+  filter: blur(24px); animation: beam 7s ease-in-out infinite alternate; }
+@keyframes beam { from { opacity: .45; } to { opacity: .95; } }
+/* 4. star dust (canvas) */
+#stars { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; }
+/* 5. vignette + film grain for a printed, premium finish */
+.bg-vignette { z-index: 0; background: radial-gradient(120% 90% at 50% 45%, transparent 50%, rgba(0, 0, 0, .65)); }
+.bg-grain { z-index: 0; opacity: .07; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
